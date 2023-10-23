@@ -27,7 +27,6 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUnpause{}, "fiattokenfactory/Unpause", nil)
 	cdc.RegisterConcrete(&MsgConfigureMinterController{}, "fiattokenfactory/ConfigureMinterController", nil)
 	cdc.RegisterConcrete(&MsgRemoveMinterController{}, "fiattokenfactory/RemoveMinterController", nil)
-	// this line is used by starport scaffolding # 2
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -47,8 +46,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgConfigureMinterController{},
 		&MsgRemoveMinterController{},
 	)
-
-	// this line is used by starport scaffolding # 3
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

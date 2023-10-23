@@ -19,8 +19,7 @@ func DefaultGenesis() *GenesisState {
 		Owner:                nil,
 		MinterControllerList: []MinterController{},
 		MintingDenom:         nil,
-		// this line is used by starport scaffolding # genesis/types/default
-		Params: DefaultParams(),
+		Params:               DefaultParams(),
 	}
 }
 
@@ -114,8 +113,6 @@ func (gs GenesisState) Validate() error {
 	if gs.MintingDenom != nil && gs.MintingDenom.Denom == "" {
 		return fmt.Errorf("minting denom cannot be an empty string")
 	}
-
-	// this line is used by starport scaffolding # genesis/types/validate
 
 	return gs.Params.Validate()
 }
