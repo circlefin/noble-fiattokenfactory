@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package circle.fiattokenfactory.v1;
+
+import "circle/fiattokenfactory/v1/blacklisted.proto";
+import "circle/fiattokenfactory/v1/blacklister.proto";
+import "circle/fiattokenfactory/v1/master_minter.proto";
+import "circle/fiattokenfactory/v1/minter_controller.proto";
+import "circle/fiattokenfactory/v1/minters.proto";
+import "circle/fiattokenfactory/v1/minting_denom.proto";
+import "circle/fiattokenfactory/v1/owner.proto";
+import "circle/fiattokenfactory/v1/params.proto";
+import "circle/fiattokenfactory/v1/paused.proto";
+import "circle/fiattokenfactory/v1/pauser.proto";
+import "gogoproto/gogo.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types";
+
+// GenesisState defines the fiattokenfactory module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  repeated Blacklisted blacklisted_list = 2 [(gogoproto.nullable) = false];
+  Paused paused = 3;
+  MasterMinter master_minter = 4;
+  repeated Minters minters_list = 5 [(gogoproto.nullable) = false];
+  Pauser pauser = 6;
+  Blacklister blacklister = 7;
+  Owner owner = 8;
+  repeated MinterController minter_controller_list = 9 [(gogoproto.nullable) = false];
+  MintingDenom minting_denom = 10;
+  // this line is used by starport scaffolding # genesis/proto/state
+}

@@ -1,8 +1,9 @@
 syntax = "proto3";
-package noble.fiattokenfactory;
+
+package circle.fiattokenfactory.v1;
 
 option go_package = "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types";
 
-message Blacklister {
-  string address = 1;
+message Paused {
+  bool paused = 1;
 }
