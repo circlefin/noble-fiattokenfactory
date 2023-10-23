@@ -40,6 +40,7 @@ func TestMinterControllerGet(t *testing.T) {
 		)
 	}
 }
+
 func TestMinterControllerRemove(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper(t)
 	items := createNMinterController(keeper, ctx, 10)
