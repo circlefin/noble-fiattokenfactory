@@ -1,5 +1,5 @@
-.PHONY: proto-setup proto-format proto-lint proto-gen format lint
-all: proto-all format lint
+.PHONY: proto-setup proto-format proto-lint proto-gen format lint test
+all: proto-all format lint test
 
 ###############################################################################
 ###                          Formatting & Linting                           ###
@@ -48,3 +48,12 @@ proto-setup:
 	@echo "🤖 Setting up protobuf environment..."
 	@docker build --rm --tag noble-fiattokenfactory-proto:latest --file proto/Dockerfile .
 	@echo "✅ Setup protobuf environment!"
+
+###############################################################################
+###                                 Testing                                 ###
+###############################################################################
+
+test:
+	@echo "🤖 Running tests..."
+	@go test -cover -race -v ./x/...
+	@echo "✅ Completed tests!"
