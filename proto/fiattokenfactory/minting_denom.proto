@@ -3,4 +3,6 @@ package noble.fiattokenfactory;
 
 option go_package = "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types";
 
-message MintingDenom { string denom = 1; }
+message MintingDenom {
+  string denom = 1;
+}
