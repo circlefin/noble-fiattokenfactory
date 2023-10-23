@@ -3,11 +3,11 @@ package cli
 import (
 	"strconv"
 
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
 )
 
 var _ = strconv.Itoa(0)

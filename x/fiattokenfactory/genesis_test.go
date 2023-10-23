@@ -3,10 +3,10 @@ package fiattokenfactory_test
 import (
 	"testing"
 
-	keepertest "github.com/strangelove-ventures/noble/testutil/keeper"
-	"github.com/strangelove-ventures/noble/testutil/nullify"
-	fiattokenfactory "github.com/strangelove-ventures/noble/x/fiattokenfactory"
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
+	keepertest "github.com/circlefin/noble-fiattokenfactory/testutil/keeper"
+	"github.com/circlefin/noble-fiattokenfactory/testutil/nullify"
+	fiattokenfactory "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory"
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 
 	"github.com/stretchr/testify/require"
 )

@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -1,8 +1,8 @@
 package keeper
 
 import (
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
 )
 
 // GetParams get all parameters as types.Params

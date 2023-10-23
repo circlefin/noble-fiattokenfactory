@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 )
 
 var _ types.QueryServer = Keeper{}
