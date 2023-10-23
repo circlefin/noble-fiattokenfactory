@@ -81,8 +81,6 @@ const (
 	opWeightMsgRemoveMinterController = "op_weight_msg_remove_minter_controller"
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgRemoveMinterController int = 100
-
-	// this line is used by starport scaffolding # simapp/module/const
 )
 
 // GenerateGenesisState creates a randomized GenState of the module
@@ -304,8 +302,6 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		weightMsgRemoveMinterController,
 		tokenfactorysimulation.SimulateMsgRemoveMinterController(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
-
-	// this line is used by starport scaffolding # simapp/module/operation
 
 	return operations
 }

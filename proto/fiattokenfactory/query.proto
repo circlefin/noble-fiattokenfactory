@@ -2,7 +2,6 @@ syntax = "proto3";
 package noble.fiattokenfactory;
 
 import "cosmos/base/query/v1beta1/pagination.proto";
-// this line is used by starport scaffolding # 1
 import "fiattokenfactory/blacklisted.proto";
 import "fiattokenfactory/blacklister.proto";
 import "fiattokenfactory/master_minter.proto";
@@ -78,7 +77,6 @@ service Query {
   rpc MintingDenom(QueryGetMintingDenomRequest) returns (QueryGetMintingDenomResponse) {
     option (google.api.http).get = "/noble/fiattokenfactory/minting_denom";
   }
-  // this line is used by starport scaffolding # 2
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -172,4 +170,3 @@ message QueryGetMintingDenomRequest {}
 message QueryGetMintingDenomResponse {
   MintingDenom mintingDenom = 1 [(gogoproto.nullable) = false];
 }
-// this line is used by starport scaffolding # 3

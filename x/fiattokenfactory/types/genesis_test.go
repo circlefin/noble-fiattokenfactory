@@ -72,7 +72,6 @@ func TestGenesisState_Validate(t *testing.T) {
 				MintingDenom: &types.MintingDenom{
 					Denom: "test",
 				},
-				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},
@@ -170,7 +169,6 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: false,
 		},
-		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tc.genState.Validate()
