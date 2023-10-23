@@ -49,7 +49,6 @@ func InitGenesis(ctx sdk.Context, k *keeper.Keeper, bankKeeper types.BankKeeper,
 		}
 		k.SetMintingDenom(ctx, *genState.MintingDenom)
 	}
-	// this line is used by starport scaffolding # genesis/module/init
 	k.SetParams(ctx, genState.Params)
 }
 
@@ -87,7 +86,6 @@ func ExportGenesis(ctx sdk.Context, k *keeper.Keeper) *types.GenesisState {
 
 	mintingDenom := k.GetMintingDenom(ctx)
 	genesis.MintingDenom = &mintingDenom
-	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis
 }

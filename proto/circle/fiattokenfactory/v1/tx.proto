@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package circle.fiattokenfactory.v1;
 
-// this line is used by starport scaffolding # proto/tx/import
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
@@ -25,7 +24,6 @@ service Msg {
   rpc Unpause(MsgUnpause) returns (MsgUnpauseResponse);
   rpc ConfigureMinterController(MsgConfigureMinterController) returns (MsgConfigureMinterControllerResponse);
   rpc RemoveMinterController(MsgRemoveMinterController) returns (MsgRemoveMinterControllerResponse);
-  // this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgUpdateMasterMinter {
@@ -132,5 +130,3 @@ message MsgRemoveMinterController {
 }
 
 message MsgRemoveMinterControllerResponse {}
-
-// this line is used by starport scaffolding # proto/tx/message

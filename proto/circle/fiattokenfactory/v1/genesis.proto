@@ -13,7 +13,6 @@ import "circle/fiattokenfactory/v1/params.proto";
 import "circle/fiattokenfactory/v1/paused.proto";
 import "circle/fiattokenfactory/v1/pauser.proto";
 import "gogoproto/gogo.proto";
-// this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types";
 
@@ -29,5 +28,4 @@ message GenesisState {
   Owner owner = 8;
   repeated MinterController minter_controller_list = 9 [(gogoproto.nullable) = false];
   MintingDenom minting_denom = 10;
-  // this line is used by starport scaffolding # genesis/proto/state
 }
