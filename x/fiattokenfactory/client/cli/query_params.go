@@ -3,10 +3,10 @@ package cli
 import (
 	"context"
 
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
 )
 
 func CmdQueryParams() *cobra.Command {

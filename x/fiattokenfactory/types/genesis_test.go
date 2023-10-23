@@ -3,9 +3,9 @@ package types_test
 import (
 	"testing"
 
+	"github.com/circlefin/noble-fiattokenfactory/testutil/sample"
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/strangelove-ventures/noble/testutil/sample"
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
 
 	"github.com/stretchr/testify/require"
 )

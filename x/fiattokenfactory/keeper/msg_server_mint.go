@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
 
 	sdkerrors "cosmossdk.io/errors"
 

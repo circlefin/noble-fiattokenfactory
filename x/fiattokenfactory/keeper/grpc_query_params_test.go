@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"testing"
 
+	testkeeper "github.com/circlefin/noble-fiattokenfactory/testutil/keeper"
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	testkeeper "github.com/strangelove-ventures/noble/testutil/keeper"
-	"github.com/strangelove-ventures/noble/x/fiattokenfactory/types"
 	"github.com/stretchr/testify/require"
 )
 
