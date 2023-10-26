@@ -2,6 +2,7 @@ name: Unit Tests
 
 on:
   pull_request:
+  push:
 
 jobs:
   unit-tests:
@@ -16,4 +17,4 @@ jobs:
           go-version: 1.21
 
       - name: Run Unit Tests
-        run: go test -cover -race -v ./x/...
+        run: make test-unit

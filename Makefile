@@ -1,5 +1,14 @@
-.PHONY: proto-setup proto-format proto-lint proto-gen format lint test
-all: proto-all format lint test
+.PHONY: proto-setup proto-format proto-lint proto-gen format lint test-e2e test-unit build
+all: proto-all format lint test-unit build
+
+###############################################################################
+###                                  Build                                  ###
+###############################################################################
+
+build:
+	@echo "🤖 Building simd..."
+	@cd simapp && make build
+	@echo "✅ Completed build!"
 
 ###############################################################################
 ###                          Formatting & Linting                           ###
@@ -53,7 +62,19 @@ proto-setup:
 ###                                 Testing                                 ###
 ###############################################################################
 
-test:
-	@echo "🤖 Running tests..."
+heighliner:
+	@echo "🤖 Building image..."
+	@heighliner build --chain noble-fiattokenfactory-simd --local 1> /dev/null
+	@echo "✅ Completed build!"
+
+test: test-e2e test-unit
+
+test-e2e:
+	@echo "🤖 Running e2e tests..."
+	@cd e2e && GOWORK=off go test -race -v ./...
+	@echo "✅ Completed e2e tests!"
+
+test-unit:
+	@echo "🤖 Running unit tests..."
 	@go test -cover -race -v ./x/...
-	@echo "✅ Completed tests!"
+	@echo "✅ Completed unit tests!"
