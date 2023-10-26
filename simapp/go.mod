@@ -147,13 +147,17 @@ require (
 )
 
 replace (
+	// use cosmos compatible ChainSafe/go-schnorrkel
 	github.com/ChainSafe/go-schnorrkel => github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d
+
+	// use local version of circlefin/noble-fiattokenfactory
 	github.com/circlefin/noble-fiattokenfactory => ./..
 
 	// use cosmos flavored gogo/protobuf
 	// https://github.com/cosmos/cosmos-sdk/issues/8469
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
+	// use cosmos compatible syndtr/goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 
 	// use cometbft
