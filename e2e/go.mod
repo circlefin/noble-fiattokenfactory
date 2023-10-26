@@ -6,7 +6,7 @@ require (
 	github.com/circlefin/noble-fiattokenfactory v1.0.0
 	github.com/cosmos/cosmos-sdk v0.45.16
 	github.com/icza/dyno v0.0.0-20220812133438-f0b6f8a18845
-	github.com/strangelove-ventures/interchaintest/v4 v4.0.0-20231020192006-848acaeab959
+	github.com/strangelove-ventures/interchaintest/v4 v4.0.0-20231026153934-334934f17a68
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.24.0
 )
@@ -174,9 +174,6 @@ replace (
 	// use cosmos flavored gogo/protobuf
 	// https://github.com/cosmos/cosmos-sdk/issues/8469
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-	// use strangelove-ventures/interchaintest/v4 hot-fix
-	github.com/strangelove-ventures/interchaintest/v4 => github.com/noble-assets/interchaintest/v4 v4.0.0-20231026104200-eb0d0c054327
 
 	// use cosmos compatible syndtr/goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
