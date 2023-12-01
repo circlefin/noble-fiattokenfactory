@@ -4,7 +4,7 @@ VERSION := $(shell echo $(shell git describe --always) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
-BUILDDIR ?= $(PWD)/build
+BUILDDIR ?= "$(PWD)"/build
 
 export GO111MODULE = on
 
@@ -96,7 +96,7 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 	@go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 $(BUILDDIR)/:
-	mkdir -p $(BUILDDIR)/
+	@mkdir -p $(BUILDDIR)/
 
 .PHONY: build
 
@@ -105,6 +105,5 @@ $(BUILDDIR)/:
 ###############################################################################
 
 go.sum: go.mod
-	echo "Ensure dependencies have not been modified ..." >&2
-	go mod verify
-	go mod tidy
+	@go mod verify 1> /dev/null
+	@go mod tidy
