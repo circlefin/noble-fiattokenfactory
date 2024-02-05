@@ -5,6 +5,9 @@ on:
   push:
     branches: [master]
 
+permissions:
+  pull-requests: write
+
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
