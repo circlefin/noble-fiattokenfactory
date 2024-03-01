@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
@@ -153,12 +154,19 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	require.NoError(t, err, "failed to get user balance")
 	require.Equal(t, int64(100), userBalance, "user balance should not have incremented while blacklisted")
 
+	// authz send to blacklisted account
+	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.User, extraWallets.Alice)
+	// authz send from blacklisted account
+	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User, extraWallets.User2, extraWallets.Alice)
+	// authz send with blacklisted grantee
+	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.Alice, extraWallets.User)
+
 	err = nobleValidator.SendFunds(ctx, extraWallets.User2.KeyName(), ibc.WalletAmount{
 		Address: extraWallets.User.FormattedAddress(),
 		Denom:   "token",
 		Amount:  100,
 	})
-	require.NoError(t, err, "The tx should have been successfull as that is no the minting denom")
+	require.NoError(t, err, "The tx should have been successfull as that is not the minting denom")
 
 	_, err = nobleValidator.ExecTx(ctx, roles.Blacklister.KeyName(),
 		tokenfactoryModName, "unblacklist", extraWallets.User.FormattedAddress(), "-b", "block",
@@ -263,6 +271,9 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	)
 	require.NoError(t, err, "minters should be able to be removed while in paused state")
 
+	// authz send fails when chain is paused
+	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.User, extraWallets.Alice)
+
 	_, err = nobleValidator.ExecTx(ctx, roles.Pauser.KeyName(),
 		tokenfactoryModName, "unpause", "-b", "block",
 	)
@@ -282,4 +293,47 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	aliceBalance, err = noble.GetBalance(ctx, extraWallets.Alice.FormattedAddress(), mintingDenom)
 	require.NoError(t, err, "failed to get alice balance")
 	require.Equal(t, int64(100), aliceBalance, "alice balance should not have increased while chain is paused")
+
+	testAuthZSendSucceed(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User, extraWallets.User2, extraWallets.Alice)
+}
+
+func testAuthZSend(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet) (string, error) {
+	grantAuthorization(t, ctx, nobleValidator, mintingDenom, noble, fromWallet, granteeWallet)
+
+	bz, _, _ := nobleValidator.ExecBin(ctx, "tx", "bank", "send", fromWallet.FormattedAddress(), toWallet.FormattedAddress(), fmt.Sprintf("%d%s", 50, mintingDenom), "--chain-id", noble.Config().ChainID, "--generate-only")
+	_ = nobleValidator.WriteFile(ctx, bz, "tx.json")
+
+	return nobleValidator.ExecTx(ctx, granteeWallet.KeyName(), "authz", "exec", "/var/cosmos-chain/noble-1/tx.json")
+}
+
+func testAuthZSendFail(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet) {
+	toWalletInitialBalance := getBalance(t, ctx, nobleValidator, mintingDenom, noble, toWallet)
+
+	_, err := testAuthZSend(t, ctx, nobleValidator, mintingDenom, noble, fromWallet, toWallet, granteeWallet)
+
+	require.Error(t, err, "failed to block transactions")
+	toWalletBalance := getBalance(t, ctx, nobleValidator, mintingDenom, noble, toWallet)
+	require.Equal(t, toWalletInitialBalance, toWalletBalance, "toWallet balance should not have incremented")
+}
+
+func testAuthZSendSucceed(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet) {
+	toWalletInitialBalance := getBalance(t, ctx, nobleValidator, mintingDenom, noble, toWallet)
+
+	_, err := testAuthZSend(t, ctx, nobleValidator, mintingDenom, noble, fromWallet, toWallet, granteeWallet)
+
+	require.NoError(t, err, "failed to execute authz message")
+	toWalletBalance := getBalance(t, ctx, nobleValidator, mintingDenom, noble, toWallet)
+	require.Equal(t, toWalletInitialBalance+50, toWalletBalance, "toWallet balance should have incremented")
+}
+
+
+func grantAuthorization(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, grantor ibc.Wallet, grantee ibc.Wallet) {
+	_, err := nobleValidator.ExecTx(ctx, grantor.KeyName(), "authz", "grant", grantee.FormattedAddress(), "send", "--spend-limit", fmt.Sprintf("%d%s", 100, mintingDenom))
+	require.NoError(t, err, "failed to grant permissions")
+}
+
+func getBalance(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, wallet ibc.Wallet) int64 {
+	bal, err := noble.GetBalance(ctx, wallet.FormattedAddress(), mintingDenom)
+	require.NoError(t, err, "failed to get user balance")
+	return bal
 }
