@@ -202,7 +202,9 @@ func (ad IsBlacklistedDecorator) CheckMessages(ctx sdk.Context, msgs []sdk.Msg, 
 			if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
 				return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not receive tokens", m.Receiver)
 			} else if err != nil {
-				return sdkerrors.Wrapf(err, "error decoding address (%s)", m.Receiver)
+				// Ignore the decoding error because the receiver address could be a non-cosmos address
+				// and the destination chain should be in charge of minting the token
+				continue
 			}
 		default:
 			continue
