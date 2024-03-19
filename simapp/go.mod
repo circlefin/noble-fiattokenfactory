@@ -151,6 +151,9 @@ replace (
 	// use local version of circlefin/noble-fiattokenfactory
 	github.com/circlefin/noble-fiattokenfactory => ./..
 
+	// use noble compatible cosmos/cosmos-sdk
+	github.com/cosmos/cosmos-sdk => github.com/noble-assets/cosmos-sdk v0.45.17-0.20240313121500-4716abcf10d9
+
 	// use cosmos flavored gogo/protobuf
 	// https://github.com/cosmos/cosmos-sdk/issues/8469
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
