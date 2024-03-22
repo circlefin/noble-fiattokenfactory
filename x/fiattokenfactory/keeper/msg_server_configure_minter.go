@@ -27,6 +27,12 @@ func (k msgServer) ConfigureMinter(goCtx context.Context, msg *types.MsgConfigur
 		return nil, sdkerrors.Wrapf(types.ErrUnauthorized, "you are not a controller of this minter")
 	}
 
+	paused := k.GetPaused(ctx)
+
+	if paused.Paused {
+		return nil, sdkerrors.Wrapf(types.ErrMint, "minting is paused")
+	}
+
 	if msg.Address != minterController.Minter {
 		return nil, sdkerrors.Wrapf(
 			types.ErrUnauthorized,

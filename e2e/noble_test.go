@@ -211,17 +211,17 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	testReverseIBCTransferFail(t, ctx, mintingDenom, gaia, noble, gaiaWallets[1], extraWallets.User, "not found")
 
 	// authz send to blacklisted account
-	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.User, extraWallets.Alice)
+	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.User, extraWallets.Alice, "blacklisted", false)
 	// authz send from blacklisted account
-	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User, extraWallets.User2, extraWallets.Alice)
+	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User, extraWallets.User2, extraWallets.Alice, "blacklisted", false)
 	// authz send with blacklisted grantee
-	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.Alice, extraWallets.User)
+	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.Alice, extraWallets.User, "blacklisted", false)
 	// authz ibc transfer to blacklisted account
-	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.User, extraWallets.Alice, "blacklisted")
+	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.User, extraWallets.Alice, "blacklisted", false)
 	// authz ibc transfer from blacklisted account
-	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User, extraWallets.User2, extraWallets.Alice, "blacklisted")
+	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User, extraWallets.User2, extraWallets.Alice, "blacklisted", false)
 	// authz ibc transfer with blacklisted grantee
-	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.Alice, extraWallets.User, "blacklisted")
+	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.Alice, extraWallets.User, "blacklisted", false)
 
 	err = nobleValidator.SendFunds(ctx, extraWallets.User2.KeyName(), ibc.WalletAmount{
 		Address: extraWallets.User.FormattedAddress(),
@@ -266,6 +266,14 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 		tokenfactoryModName, "update-pauser", roles.Pauser.FormattedAddress(), "-b", "block",
 	)
 	require.NoError(t, err, "failed to update pauser")
+
+	_, err = nobleValidator.ExecTx(ctx, roles.MasterMinter.KeyName(),
+		tokenfactoryModName, "configure-minter-controller", roles.MinterController2.FormattedAddress(), extraWallets.User.FormattedAddress(), "-b", "block")
+	require.NoError(t, err, "failed to execute configure minter controller tx")
+
+	_, err = nobleValidator.ExecTx(ctx, roles.MinterController2.KeyName(),
+		tokenfactoryModName, "configure-minter", extraWallets.User.FormattedAddress(), "1000"+mintingDenom, "-b", "block")
+	require.NoError(t, err, "failed to execute configure minter tx")
 
 	// -- chain paused --
 
@@ -312,7 +320,7 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 
 	_, err = nobleValidator.ExecTx(ctx, roles.MinterController2.KeyName(),
 		tokenfactoryModName, "configure-minter", extraWallets.User.FormattedAddress(), "1000"+mintingDenom, "-b", "block")
-	require.NoError(t, err, "failed to execute configure minter tx")
+	require.Error(t, err, "failed to block configure minter tx when chain is paused")
 
 	res, _, err := nobleValidator.ExecQuery(ctx, tokenfactoryModName, "show-minter-controller", roles.MinterController2.FormattedAddress(), "-o", "json")
 	require.NoError(t, err, "failed to query minter controller")
@@ -333,12 +341,15 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	)
 	require.NoError(t, err, "minters should be able to be removed while in paused state")
 
+	_, err = nobleValidator.ExecTx(ctx, extraWallets.User2.KeyName(), "authz", "grant", extraWallets.Alice.FormattedAddress(), "send", "--spend-limit", fmt.Sprintf("%d%s", 100, mintingDenom))
+	require.ErrorContains(t, err, "paused", "failed to grant permissions")
+
 	// IBC transfer fails when asset is paused
 	testIBCTransferFail(t, ctx, mintingDenom, noble, gaia, extraWallets.User, extraWallets.User2, "paused")
-	// authz send fails when asset is paused
-	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.User, extraWallets.Alice)
-	// authz IBC transfer fails when asset is paused
-	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.User, extraWallets.Alice, "paused")
+	// authz send fails when chain is paused
+	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.User, extraWallets.Alice, "paused", true)
+	// authz IBC transfer fails when chain is paused
+	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.User, extraWallets.Alice, "paused", true)
 
 	_, err = nobleValidator.ExecTx(ctx, roles.Pauser.KeyName(),
 		tokenfactoryModName, "unpause", "-b", "block",
@@ -364,9 +375,11 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	testAuthZIBCTransferSucceed(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.User, extraWallets.Alice)
 }
 
-func testAuthZSend(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet) (string, error) {
-	_, err := nobleValidator.ExecTx(ctx, fromWallet.KeyName(), "authz", "grant", granteeWallet.FormattedAddress(), "send", "--spend-limit", fmt.Sprintf("%d%s", 100, mintingDenom))
-	require.NoError(t, err, "failed to grant permissions")
+func testAuthZSend(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet, skipGrant bool) (string, error) {
+	if !skipGrant {
+		_, err := nobleValidator.ExecTx(ctx, fromWallet.KeyName(), "authz", "grant", granteeWallet.FormattedAddress(), "send", "--spend-limit", fmt.Sprintf("%d%s", 100, mintingDenom))
+		require.NoError(t, err, "failed to grant permissions")
+	}
 
 	bz, _, _ := nobleValidator.ExecBin(ctx, "tx", "bank", "send", fromWallet.FormattedAddress(), toWallet.FormattedAddress(), fmt.Sprintf("%d%s", 50, mintingDenom), "--chain-id", noble.Config().ChainID, "--generate-only")
 	_ = nobleValidator.WriteFile(ctx, bz, "tx.json")
@@ -374,12 +387,12 @@ func testAuthZSend(t *testing.T, ctx context.Context, nobleValidator *cosmos.Cha
 	return nobleValidator.ExecTx(ctx, granteeWallet.KeyName(), "authz", "exec", "/var/cosmos-chain/noble-1/tx.json", "-b", "block")
 }
 
-func testAuthZSendFail(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet) {
+func testAuthZSendFail(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet, errMsg string, skipGrant bool) {
 	toWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, toWallet)
 
-	_, err := testAuthZSend(t, ctx, nobleValidator, mintingDenom, noble, fromWallet, toWallet, granteeWallet)
+	_, err := testAuthZSend(t, ctx, nobleValidator, mintingDenom, noble, fromWallet, toWallet, granteeWallet, skipGrant)
 
-	require.Error(t, err, "failed to block transactions")
+	require.ErrorContains(t, err, errMsg, "failed to block transactions")
 	toWalletBalance := getBalance(t, ctx, mintingDenom, noble, toWallet)
 	require.Equal(t, toWalletInitialBalance, toWalletBalance, "toWallet balance should not have incremented")
 }
@@ -387,16 +400,18 @@ func testAuthZSendFail(t *testing.T, ctx context.Context, nobleValidator *cosmos
 func testAuthZSendSucceed(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet) {
 	toWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, toWallet)
 
-	_, err := testAuthZSend(t, ctx, nobleValidator, mintingDenom, noble, fromWallet, toWallet, granteeWallet)
+	_, err := testAuthZSend(t, ctx, nobleValidator, mintingDenom, noble, fromWallet, toWallet, granteeWallet, false)
 
 	require.NoError(t, err, "failed to send authz transactions")
 	toWalletBalance := getBalance(t, ctx, mintingDenom, noble, toWallet)
 	require.Equal(t, toWalletInitialBalance+50, toWalletBalance, "toWallet balance should have incremented")
 }
 
-func testAuthZIBCTransfer(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, mintingDenom string, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet) (string, error) {
-	_, err := nobleValidator.ExecTx(ctx, fromWallet.KeyName(), "authz", "grant", granteeWallet.FormattedAddress(), "generic", "--msg-type", "/ibc.applications.transfer.v1.MsgTransfer")
-	require.NoError(t, err, "failed to grant permissions")
+func testAuthZIBCTransfer(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, mintingDenom string, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet, skipGrant bool) (string, error) {
+	if !skipGrant {
+		_, err := nobleValidator.ExecTx(ctx, fromWallet.KeyName(), "authz", "grant", granteeWallet.FormattedAddress(), "generic", "--msg-type", "/ibc.applications.transfer.v1.MsgTransfer")
+		require.NoError(t, err, "failed to grant permissions")
+	}
 
 	recipient, err := sdk.Bech32ifyAddressBytes(gaia.Config().Bech32Prefix, toWallet.Address())
 	require.NoError(t, err, "failed to convert noble address to gaia address")
@@ -407,7 +422,7 @@ func testAuthZIBCTransfer(t *testing.T, ctx context.Context, nobleValidator *cos
 	return nobleValidator.ExecTx(ctx, granteeWallet.KeyName(), "authz", "exec", "/var/cosmos-chain/noble-1/tx.json", "-b", "block")
 }
 
-func testAuthZIBCTransferFail(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet, errMsg string) {
+func testAuthZIBCTransferFail(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet, errMsg string, skipGrant bool) {
 	ibcDenom := transfertypes.DenomTrace{
 		Path:      "transfer/channel-0",
 		BaseDenom: mintingDenom,
@@ -416,7 +431,7 @@ func testAuthZIBCTransferFail(t *testing.T, ctx context.Context, nobleValidator 
 	fromWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
 	toWalletInitialBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
 
-	_, err := testAuthZIBCTransfer(t, ctx, nobleValidator, noble, gaia, mintingDenom, fromWallet, toWallet, granteeWallet)
+	_, err := testAuthZIBCTransfer(t, ctx, nobleValidator, noble, gaia, mintingDenom, fromWallet, toWallet, granteeWallet, skipGrant)
 
 	require.ErrorContains(t, err, errMsg)
 	fromWalletBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
@@ -431,7 +446,7 @@ func testAuthZIBCTransferSucceed(t *testing.T, ctx context.Context, nobleValidat
 	fromWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
 	toWalletInitialBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
 
-	_, err := testAuthZIBCTransfer(t, ctx, nobleValidator, noble, gaia, mintingDenom, fromWallet, toWallet, granteeWallet)
+	_, err := testAuthZIBCTransfer(t, ctx, nobleValidator, noble, gaia, mintingDenom, fromWallet, toWallet, granteeWallet, false)
 	require.NoError(t, err, "failed to exec IBC transfer via authz")
 
 	require.NoError(t, testutil.WaitForBlocks(ctx, 10, noble, gaia))

@@ -631,6 +631,7 @@ func NewSimApp(
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 			},
 			IBCKeeper:              app.IBCKeeper,
+			cdc:                    appCodec,
 			FiatTokenFactoryKeeper: app.FiatTokenFactoryKeeper,
 		},
 	)
