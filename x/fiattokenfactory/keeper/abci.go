@@ -12,7 +12,7 @@ func (k *Keeper) HandleDeliverTxEvent(ctx sdk.Context, event abci.Event) error {
 	if event.Type == banktypes.EventTypeTransfer {
 		var recipient string
 		var sender string
-		var coins sdk.Coins
+		coins := sdk.NewCoins()
 
 		for _, attribute := range event.Attributes {
 			switch string(attribute.Key) {

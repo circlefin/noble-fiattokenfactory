@@ -168,7 +168,7 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 
 	gaiaWalletBech32Addr, err := sdk.Bech32ifyAddressBytes(noble.Config().Bech32Prefix, gaiaWallets[0].Address())
 	require.NoError(t, err, "failed to convert gaia wallet address")
-	
+
 	_, err = nobleValidator.ExecTx(ctx, roles.Blacklister.KeyName(),
 		tokenfactoryModName, "blacklist", gaiaWalletBech32Addr, "-b", "block",
 	)
@@ -206,7 +206,7 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 
 	// IBC transfer from blacklisted account, from gaia to noble
 	testReverseIBCTransferFail(t, ctx, mintingDenom, gaia, noble, gaiaWallets[0], extraWallets.User2, "not found")
-	
+
 	// IBC transfer to blacklisted account, from gaia to noble
 	testReverseIBCTransferFail(t, ctx, mintingDenom, gaia, noble, gaiaWallets[1], extraWallets.User, "not found")
 
@@ -487,7 +487,7 @@ func testIBCTransferSucceed(t *testing.T, ctx context.Context, mintingDenom stri
 	toWalletInitialBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
 
 	_, err := testIBCTransfer(t, ctx, mintingDenom, noble, gaia, fromWallet, toWallet)
-	
+
 	require.NoError(t, err, "failed to send IBC transfer")
 	require.NoError(t, testutil.WaitForBlocks(ctx, 10, noble, gaia))
 	fromWalletBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
@@ -506,8 +506,8 @@ func testReverseIBCTransferFail(t *testing.T, ctx context.Context, mintingDenom 
 	require.NoError(t, err, "failed to convert address")
 	tx, err := gaia.SendIBCTransfer(ctx, "channel-0", fromWallet.KeyName(), ibc.WalletAmount{
 		Address: recipient,
-		Denom: getIBCDenom(mintingDenom),
-		Amount: 10,
+		Denom:   getIBCDenom(mintingDenom),
+		Amount:  10,
 	}, ibc.TransferOptions{})
 	require.NoError(t, err, "failed to send ibc transfer")
 
