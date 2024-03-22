@@ -84,16 +84,18 @@ func TestNobleChain(t *testing.T) {
 		_ = ic.Close()
 	})
 
+	gaiaWallets := interchaintest.GetAndFundTestUsers(t, ctx, "receiver", 1_000_000, gaia, gaia)
+
 	t.Run("fiat-tokenfactory", func(t *testing.T) {
 		t.Parallel()
-		nobleTokenfactory_e2e(t, ctx, "fiat-tokenfactory", denomMetadataDrachma.Base, noble, gaia, gw.fiatTfRoles, gw.extraWallets)
+		nobleTokenfactory_e2e(t, ctx, "fiat-tokenfactory", denomMetadataDrachma.Base, noble, gaia, gw.fiatTfRoles, gw.extraWallets, gaiaWallets)
 	})
 
 	err = rly.StartRelayer(ctx, eRep, "transfer")
 	require.NoError(t, err, "failed to start relayer")
 }
 
-func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModName, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, roles NobleRoles, extraWallets ExtraWallets) {
+func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModName, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, roles NobleRoles, extraWallets ExtraWallets, gaiaWallets []ibc.Wallet) {
 	nobleValidator := noble.Validators[0]
 
 	_, err := nobleValidator.ExecTx(ctx, roles.Owner2.KeyName(),
@@ -142,13 +144,17 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	require.NoError(t, err, "failed to execute configure minter tx")
 
 	_, err = nobleValidator.ExecTx(ctx, roles.Minter.KeyName(),
-		tokenfactoryModName, "mint", extraWallets.User.FormattedAddress(), "100"+mintingDenom, "-b", "block",
+		tokenfactoryModName, "mint", extraWallets.User.FormattedAddress(), "200"+mintingDenom, "-b", "block",
 	)
 	require.NoError(t, err, "failed to execute mint to user tx")
 
 	userBalance, err := noble.GetBalance(ctx, extraWallets.User.FormattedAddress(), mintingDenom)
 	require.NoError(t, err, "failed to get user balance")
-	require.Equalf(t, int64(100), userBalance, "failed to mint %s to user", mintingDenom)
+	require.Equalf(t, int64(200), userBalance, "failed to mint %s to user", mintingDenom)
+
+	// Fund gaia wallets with tokens to prepare for IBC tests
+	testIBCTransferSucceed(t, ctx, mintingDenom, noble, gaia, extraWallets.User, gaiaWallets[0])
+	testIBCTransferSucceed(t, ctx, mintingDenom, noble, gaia, extraWallets.User, gaiaWallets[1])
 
 	_, err = nobleValidator.ExecTx(ctx, roles.Owner2.KeyName(),
 		tokenfactoryModName, "update-blacklister", roles.Blacklister.FormattedAddress(), "-b", "block",
@@ -159,6 +165,14 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 		tokenfactoryModName, "blacklist", extraWallets.User.FormattedAddress(), "-b", "block",
 	)
 	require.NoError(t, err, "failed to blacklist user address")
+
+	gaiaWalletBech32Addr, err := sdk.Bech32ifyAddressBytes(noble.Config().Bech32Prefix, gaiaWallets[0].Address())
+	require.NoError(t, err, "failed to convert gaia wallet address")
+	
+	_, err = nobleValidator.ExecTx(ctx, roles.Blacklister.KeyName(),
+		tokenfactoryModName, "blacklist", gaiaWalletBech32Addr, "-b", "block",
+	)
+	require.NoError(t, err, "failed to blacklist gaia wallet address")
 
 	_, err = nobleValidator.ExecTx(ctx, roles.Minter.KeyName(),
 		tokenfactoryModName, "mint", extraWallets.User.FormattedAddress(), "100"+mintingDenom, "-b", "block",
@@ -184,6 +198,17 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	userBalance, err = noble.GetBalance(ctx, extraWallets.User.FormattedAddress(), mintingDenom)
 	require.NoError(t, err, "failed to get user balance")
 	require.Equal(t, int64(100), userBalance, "user balance should not have incremented while blacklisted")
+
+	// IBC transfer from blacklisted account, from noble to gaia
+	testIBCTransferFail(t, ctx, mintingDenom, noble, gaia, extraWallets.User, extraWallets.User2, "blacklisted")
+	// IBC transfer to blacklisted account, from noble to gaia
+	testIBCTransferFail(t, ctx, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.User, "blacklisted")
+
+	// IBC transfer from blacklisted account, from gaia to noble
+	testReverseIBCTransferFail(t, ctx, mintingDenom, gaia, noble, gaiaWallets[0], extraWallets.User2, "not found")
+	
+	// IBC transfer to blacklisted account, from gaia to noble
+	testReverseIBCTransferFail(t, ctx, mintingDenom, gaia, noble, gaiaWallets[1], extraWallets.User, "not found")
 
 	// authz send to blacklisted account
 	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.User, extraWallets.Alice)
@@ -308,9 +333,11 @@ func nobleTokenfactory_e2e(t *testing.T, ctx context.Context, tokenfactoryModNam
 	)
 	require.NoError(t, err, "minters should be able to be removed while in paused state")
 
-	// authz send fails when chain is paused
+	// IBC transfer fails when asset is paused
+	testIBCTransferFail(t, ctx, mintingDenom, noble, gaia, extraWallets.User, extraWallets.User2, "paused")
+	// authz send fails when asset is paused
 	testAuthZSendFail(t, ctx, nobleValidator, mintingDenom, noble, extraWallets.User2, extraWallets.User, extraWallets.Alice)
-	// authz IBC transfer fails when chain is paused
+	// authz IBC transfer fails when asset is paused
 	testAuthZIBCTransferFail(t, ctx, nobleValidator, mintingDenom, noble, gaia, extraWallets.User2, extraWallets.User, extraWallets.Alice, "paused")
 
 	_, err = nobleValidator.ExecTx(ctx, roles.Pauser.KeyName(),
@@ -399,9 +426,7 @@ func testAuthZIBCTransferFail(t *testing.T, ctx context.Context, nobleValidator 
 }
 
 func testAuthZIBCTransferSucceed(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet) {
-	prefixedDenom := transfertypes.GetPrefixedDenom("transfer", "channel-0", mintingDenom)
-	denomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	ibcDenom := denomTrace.IBCDenom()
+	ibcDenom := getIBCDenom(mintingDenom)
 
 	fromWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
 	toWalletInitialBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
@@ -417,6 +442,67 @@ func testAuthZIBCTransferSucceed(t *testing.T, ctx context.Context, nobleValidat
 	require.Equal(t, toWalletInitialBalance+50, toWalletBalance, "toWallet balance should have incremented")
 }
 
+func testIBCTransfer(t *testing.T, ctx context.Context, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet) (string, error) {
+	recipient, err := sdk.Bech32ifyAddressBytes(gaia.Config().Bech32Prefix, toWallet.Address())
+	require.NoError(t, err, "failed to convert address")
+
+	validator := noble.Validators[0]
+
+	return validator.ExecTx(ctx, fromWallet.KeyName(), "ibc-transfer", "transfer", "transfer", "channel-0", recipient, fmt.Sprintf("%d%s", 50, mintingDenom), "--chain-id", noble.Config().ChainID, "--from", fromWallet.FormattedAddress(), "--node", fmt.Sprintf("tcp://%s:26657", validator.HostName()), "-b", "block")
+}
+
+func testIBCTransferFail(t *testing.T, ctx context.Context, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, errMsg string) {
+	ibcDenom := getIBCDenom(mintingDenom)
+	fromWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
+	toWalletInitialBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
+
+	_, err := testIBCTransfer(t, ctx, mintingDenom, noble, gaia, fromWallet, toWallet)
+
+	require.ErrorContains(t, err, errMsg, "failed to block IBC transfer")
+	require.NoError(t, testutil.WaitForBlocks(ctx, 10, noble, gaia))
+	fromWalletBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
+	require.Equal(t, fromWalletInitialBalance, fromWalletBalance, "fromWallet balance should not have decremented")
+	toWalletBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
+	require.Equal(t, toWalletInitialBalance, toWalletBalance, "toWallet balance should not have incremented")
+}
+
+func testIBCTransferSucceed(t *testing.T, ctx context.Context, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet) {
+	ibcDenom := getIBCDenom(mintingDenom)
+	fromWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
+	toWalletInitialBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
+
+	_, err := testIBCTransfer(t, ctx, mintingDenom, noble, gaia, fromWallet, toWallet)
+	
+	require.NoError(t, err, "failed to send IBC transfer")
+	require.NoError(t, testutil.WaitForBlocks(ctx, 10, noble, gaia))
+	fromWalletBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
+	require.Equal(t, fromWalletInitialBalance-50, fromWalletBalance, "fromWallet balance should have decremented")
+	toWalletBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
+	require.Equal(t, toWalletInitialBalance+50, toWalletBalance, "toWallet balance should have incremented")
+}
+
+func testReverseIBCTransferFail(t *testing.T, ctx context.Context, mintingDenom string, gaia *cosmos.CosmosChain, noble *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, errMsg string) {
+	height, err := gaia.Height(ctx)
+	require.NoError(t, err, "failed to get noble height")
+
+	userBalBefore := getBalance(t, ctx, mintingDenom, noble, toWallet)
+
+	recipient, err := sdk.Bech32ifyAddressBytes(noble.Config().Bech32Prefix, toWallet.Address())
+	require.NoError(t, err, "failed to convert address")
+	tx, err := gaia.SendIBCTransfer(ctx, "channel-0", fromWallet.KeyName(), ibc.WalletAmount{
+		Address: recipient,
+		Denom: getIBCDenom(mintingDenom),
+		Amount: 10,
+	}, ibc.TransferOptions{})
+	require.NoError(t, err, "failed to send ibc transfer")
+
+	_, err = testutil.PollForAck(ctx, noble, height, height+10, tx.Packet)
+	require.ErrorContains(t, err, errMsg, "Expect ack not found from noble")
+
+	userBalAfter := getBalance(t, ctx, mintingDenom, noble, toWallet)
+	require.Equal(t, userBalBefore, userBalAfter, "User wallet balance should not have increased")
+}
+
 func getBalance(t *testing.T, ctx context.Context, denom string, chain *cosmos.CosmosChain, wallet ibc.Wallet) int64 {
 	addr, err := sdk.Bech32ifyAddressBytes(chain.Config().Bech32Prefix, wallet.Address())
 	require.NoError(t, err, "failed to convert address")
@@ -424,4 +510,11 @@ func getBalance(t *testing.T, ctx context.Context, denom string, chain *cosmos.C
 	bal, err := chain.GetBalance(ctx, addr, denom)
 	require.NoError(t, err, "failed to get user balance")
 	return bal
+}
+
+func getIBCDenom(mintingDenom string) string {
+	return transfertypes.DenomTrace{
+		Path:      "transfer/channel-0",
+		BaseDenom: mintingDenom,
+	}.IBCDenom()
 }

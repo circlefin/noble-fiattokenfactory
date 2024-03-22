@@ -108,6 +108,8 @@ import (
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 
+	// BlockIBC
+	"github.com/circlefin/noble-fiattokenfactory/x/blockibc"
 	// FiatTokenFactory
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory"
 	fiattokenfactorykeeper "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/keeper"
@@ -433,6 +435,7 @@ func NewSimApp(
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
+	transferStack = blockibc.NewIBCMiddleware(transferStack, app.FiatTokenFactoryKeeper)
 
 	// Add transfer stack to IBC Router
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
