@@ -32,13 +32,21 @@ func (k *Keeper) HandleDeliverTxEvent(ctx sdk.Context, event abci.Event) error {
 			}
 
 			// Check if sender is blacklisted.
-			_, found := k.GetBlacklisted(ctx, sdk.MustAccAddressFromBech32(sender))
+			senderBz, err := sdk.AccAddressFromBech32(sender)
+			if err != nil {
+				return errors.Wrapf(types.ErrUnauthorized, "failed to parse sender %s", sender)
+			}
+			_, found := k.GetBlacklisted(ctx, senderBz)
 			if found {
 				return errors.Wrapf(types.ErrUnauthorized, "%s can not send tokens", sender)
 			}
 
 			// Check if recipient is blacklisted.
-			_, found = k.GetBlacklisted(ctx, sdk.MustAccAddressFromBech32(recipient))
+			recipientBz, err := sdk.AccAddressFromBech32(recipient)
+			if err != nil {
+				return errors.Wrapf(types.ErrUnauthorized, "failed to parse recipient %s", recipient)
+			}
+			_, found = k.GetBlacklisted(ctx, recipientBz)
 			if found {
 				return errors.Wrapf(types.ErrUnauthorized, "%s can not receive tokens", recipient)
 			}
