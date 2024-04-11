@@ -152,7 +152,7 @@ replace (
 	github.com/circlefin/noble-fiattokenfactory => ./..
 
 	// use noble compatible cosmos/cosmos-sdk
-	github.com/cosmos/cosmos-sdk => github.com/noble-assets/cosmos-sdk v0.45.17-0.20240313121500-4716abcf10d9
+	github.com/cosmos/cosmos-sdk => github.com/noble-assets/cosmos-sdk v0.45.16-noble
 
 	// use cosmos flavored gogo/protobuf
 	// https://github.com/cosmos/cosmos-sdk/issues/8469
