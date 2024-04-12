@@ -5,6 +5,7 @@ import (
 
 	fiattokenfactorykeeper "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/keeper"
 	fiattokenfactorytypes "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -14,12 +15,14 @@ import (
 )
 
 type IsPausedDecorator struct {
+	cdc              codec.Codec
 	fiatTokenFactory *fiattokenfactorykeeper.Keeper
 }
 
-func NewIsPausedDecorator(ctf *fiattokenfactorykeeper.Keeper) IsPausedDecorator {
+func NewIsPausedDecorator(cdc codec.Codec, ftf *fiattokenfactorykeeper.Keeper) IsPausedDecorator {
 	return IsPausedDecorator{
-		fiatTokenFactory: ctf,
+		cdc:              cdc,
+		fiatTokenFactory: ftf,
 	}
 }
 
@@ -46,6 +49,21 @@ func (ad IsPausedDecorator) CheckMessages(ctx sdk.Context, msgs []sdk.Msg) error
 		}
 
 		switch m := msg.(type) {
+		case *authz.MsgGrant:
+			var authorization authz.Authorization
+			err := ad.cdc.UnpackAny(m.Grant.Authorization, &authorization)
+			if err != nil {
+				return err
+			}
+
+			if grant, ok := authorization.(*banktypes.SendAuthorization); ok {
+				for _, coin := range grant.SpendLimit {
+					paused, err := checkPausedStatebyTokenFactory(ctx, coin, ad.fiatTokenFactory)
+					if paused {
+						return sdkerrors.Wrapf(err, "can not perform token authorizations")
+					}
+				}
+			}
 		case *banktypes.MsgSend:
 			for _, c := range m.Amount {
 				paused, err := checkPausedStatebyTokenFactory(ctx, c, ad.fiatTokenFactory)

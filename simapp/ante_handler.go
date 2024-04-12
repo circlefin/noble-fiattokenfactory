@@ -3,6 +3,7 @@ package simapp
 import (
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory"
 	fiattokenfactorykeeper "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/keeper"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -17,6 +18,7 @@ type HandlerOptions struct {
 	IBCKeeper *keeper.Keeper
 
 	// FiatTokenFactory
+	cdc                    codec.Codec
 	FiatTokenFactoryKeeper *fiattokenfactorykeeper.Keeper
 }
 
@@ -44,7 +46,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSetUpContextDecorator(),
 		ante.NewRejectExtensionOptionsDecorator(),
 		fiattokenfactory.NewIsBlacklistedDecorator(options.FiatTokenFactoryKeeper),
-		fiattokenfactory.NewIsPausedDecorator(options.FiatTokenFactoryKeeper),
+		fiattokenfactory.NewIsPausedDecorator(options.cdc, options.FiatTokenFactoryKeeper),
 		ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),

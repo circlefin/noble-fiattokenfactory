@@ -417,7 +417,7 @@ func nobleChainSpec(
 			ChainID:        chainID,
 			Bin:            "simd", // "nobled",
 			Denom:          "token",
-			Bech32Prefix:   "cosmos", // "noble",
+			Bech32Prefix:   "noble",
 			CoinType:       "118",
 			GasPrices:      "0.0token",
 			GasAdjustment:  1.1,

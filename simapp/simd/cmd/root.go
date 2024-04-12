@@ -48,6 +48,9 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		WithHomeDir(simapp.DefaultNodeHome).
 		WithViper("") // In simapp, we don't use any prefix for env variables.
 
+	// FiatTokenFactory
+	SetPrefixes("noble")
+
 	rootCmd := &cobra.Command{
 		Use:   "simd",
 		Short: "simulation app",

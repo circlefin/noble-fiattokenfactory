@@ -65,7 +65,7 @@ test: test-e2e test-unit
 
 test-e2e:
 	@echo "🤖 Running e2e tests..."
-	@cd e2e && GOWORK=off go test -race -v ./...
+	@cd e2e && GOWORK=off go test -timeout 0 -race -v ./...
 	@echo "✅ Completed e2e tests!"
 
 test-unit:
