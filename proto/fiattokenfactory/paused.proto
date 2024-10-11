@@ -1,8 +1,0 @@
-syntax = "proto3";
-package noble.fiattokenfactory;
-
-option go_package = "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types";
-
-message Paused {
-  bool paused = 1;
-}

@@ -1,16 +1,32 @@
+// Copyright 2024 Circle Internet Group, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package blockibc
 
 import (
+	"cosmossdk.io/errors"
+	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/keeper"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	transfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 )
 
 var _ porttypes.IBCModule = &IBCMiddleware{}
@@ -92,7 +108,7 @@ func (im IBCMiddleware) OnRecvPacket(
 	var data transfertypes.FungibleTokenPacketData
 	var ackErr error
 	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		ackErr = sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "cannot unmarshal ICS-20 transfer packet data")
+		ackErr = errors.Wrapf(types.ErrInvalidType, "cannot unmarshal ICS-20 transfer packet data")
 		return channeltypes.NewErrorAcknowledgement(ackErr)
 	}
 
@@ -107,25 +123,25 @@ func (im IBCMiddleware) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(types.ErrPaused)
 	}
 
-	_, addressBz, err := bech32.DecodeAndConvert(data.Receiver)
+	_, addressBz, err := bech32.DecodeToBase256(data.Receiver)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
 	_, found := im.keeper.GetBlacklisted(ctx, addressBz)
 	if found {
-		ackErr = sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "receiver address is blacklisted")
+		ackErr = errors.Wrapf(types.ErrUnauthorized, "receiver address is blacklisted")
 		return channeltypes.NewErrorAcknowledgement(ackErr)
 	}
 
-	_, addressBz, err = bech32.DecodeAndConvert(data.Sender)
+	_, addressBz, err = bech32.DecodeToBase256(data.Sender)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
 	_, found = im.keeper.GetBlacklisted(ctx, addressBz)
 	if found {
-		ackErr = sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "sender address is blacklisted")
+		ackErr = errors.Wrapf(types.ErrUnauthorized, "sender address is blacklisted")
 		return channeltypes.NewErrorAcknowledgement(ackErr)
 	}
 

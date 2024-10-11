@@ -1,10 +1,26 @@
+// Copyright 2024 Circle Internet Group, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package keeper
 
 import (
 	"context"
 
+	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 
 	sdkerrors "cosmossdk.io/errors"
 
@@ -22,7 +38,7 @@ func (k Keeper) Mint(ctx sdk.Context, msg *types.MsgMint) (*types.MsgMintRespons
 		return nil, sdkerrors.Wrapf(types.ErrUnauthorized, "you are not a minter")
 	}
 
-	_, addressBz, err := bech32.DecodeAndConvert(msg.From)
+	_, addressBz, err := bech32.DecodeToBase256(msg.From)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +48,7 @@ func (k Keeper) Mint(ctx sdk.Context, msg *types.MsgMint) (*types.MsgMintRespons
 		return nil, sdkerrors.Wrapf(types.ErrMint, "minter address is blacklisted")
 	}
 
-	_, addressBz, err = bech32.DecodeAndConvert(msg.Address)
+	_, addressBz, err = bech32.DecodeToBase256(msg.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +62,10 @@ func (k Keeper) Mint(ctx sdk.Context, msg *types.MsgMint) (*types.MsgMintRespons
 
 	if msg.Amount.Denom != mintingDenom.Denom {
 		return nil, sdkerrors.Wrapf(types.ErrMint, "minting denom is incorrect")
+	}
+
+	if msg.Amount.IsNil() || !msg.Amount.IsPositive() {
+		return nil, sdkerrors.Wrap(types.ErrMint, "minting amount is invalid")
 	}
 
 	if minter.Allowance.IsLT(msg.Amount) {

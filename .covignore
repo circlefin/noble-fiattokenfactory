@@ -1,0 +1,6 @@
+.pb.go
+.pb.gw.go
+/x/fiattokenfactory/simulation
+/x/fiattokenfactory/client/cli
+module_simulation.go
+module.go

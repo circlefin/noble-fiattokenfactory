@@ -1,0 +1,48 @@
+// Copyright 2024 Circle Internet Group, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package circle.fiattokenfactory.v1;
+
+import "circle/fiattokenfactory/v1/blacklisted.proto";
+import "circle/fiattokenfactory/v1/blacklister.proto";
+import "circle/fiattokenfactory/v1/master_minter.proto";
+import "circle/fiattokenfactory/v1/minter_controller.proto";
+import "circle/fiattokenfactory/v1/minters.proto";
+import "circle/fiattokenfactory/v1/minting_denom.proto";
+import "circle/fiattokenfactory/v1/owner.proto";
+import "circle/fiattokenfactory/v1/paused.proto";
+import "circle/fiattokenfactory/v1/pauser.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types";
+
+// GenesisState defines the fiattokenfactory module's genesis state.
+message GenesisState {
+  reserved "params";
+  reserved 1;
+
+  repeated Blacklisted blacklistedList = 2 [(gogoproto.nullable) = false];
+  Paused paused = 3;
+  MasterMinter masterMinter = 4;
+  repeated Minters mintersList = 5 [(gogoproto.nullable) = false];
+  Pauser pauser = 6;
+  Blacklister blacklister = 7;
+  Owner owner = 8;
+  repeated MinterController minterControllerList = 9 [(gogoproto.nullable) = false];
+  MintingDenom mintingDenom = 10;
+}

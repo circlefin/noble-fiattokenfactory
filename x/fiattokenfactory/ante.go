@@ -1,18 +1,34 @@
+// Copyright 2024 Circle Internet Group, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package fiattokenfactory
 
 import (
 	"errors"
 
-	cctptypes "github.com/circlefin/noble-cctp/x/cctp/types"
+	sdkerrors "cosmossdk.io/errors"
+	"github.com/btcsuite/btcd/btcutil/bech32"
 	fiattokenfactorykeeper "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/keeper"
+	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	fiattokenfactorytypes "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	transfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 )
 
 type IsPausedDecorator struct {
@@ -65,40 +81,6 @@ func (ad IsPausedDecorator) CheckMessages(ctx sdk.Context, msgs []sdk.Msg) error
 					}
 				}
 			}
-		case *banktypes.MsgSend:
-			for _, c := range m.Amount {
-				paused, err := checkPausedStatebyTokenFactory(ctx, c, ad.fiatTokenFactory)
-				if paused {
-					return sdkerrors.Wrapf(err, "can not perform token transfers")
-				}
-			}
-		case *banktypes.MsgMultiSend:
-			for _, i := range m.Inputs {
-				for _, c := range i.Coins {
-					paused, err := checkPausedStatebyTokenFactory(ctx, c, ad.fiatTokenFactory)
-					if paused {
-						return sdkerrors.Wrapf(err, "can not perform token transfers")
-					}
-				}
-			}
-		case *transfertypes.MsgTransfer:
-			paused, err := checkPausedStatebyTokenFactory(ctx, m.Token, ad.fiatTokenFactory)
-			if paused {
-				return sdkerrors.Wrapf(err, "can not perform token transfers")
-			}
-		case *cctptypes.MsgDepositForBurn:
-			c := sdk.Coin{Denom: m.BurnToken, Amount: sdk.NewIntFromBigInt(m.Amount.BigInt())}
-			paused, err := checkPausedStatebyTokenFactory(ctx, c, ad.fiatTokenFactory)
-			if paused {
-				return sdkerrors.Wrapf(err, "can not perform token transfers")
-			}
-		case *cctptypes.MsgDepositForBurnWithCaller:
-			c := sdk.Coin{Denom: m.BurnToken, Amount: sdk.NewIntFromBigInt(m.Amount.BigInt())}
-			paused, err := checkPausedStatebyTokenFactory(ctx, c, ad.fiatTokenFactory)
-			if paused {
-				return sdkerrors.Wrapf(err, "can not perform token transfers")
-			}
-
 		default:
 			continue
 		}
@@ -136,7 +118,20 @@ func (ad IsBlacklistedDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate
 		return ctx, err
 	}
 
-	return next(ctx, tx, simulate)
+	return next(ad.AddGranteeToContextIfPresent(ctx, msgs), tx, simulate)
+}
+
+func (ad IsBlacklistedDecorator) AddGranteeToContextIfPresent(ctx sdk.Context, msgs []sdk.Msg) sdk.Context {
+	var grantees []string
+	for _, msg := range msgs {
+		if execMsg, ok := msg.(*authz.MsgExec); ok {
+			grantees = append(grantees, execMsg.Grantee)
+		}
+	}
+	if len(grantees) > 0 {
+		return ctx.WithValue(types.GranteeKey, grantees)
+	}
+	return ctx
 }
 
 func (ad IsBlacklistedDecorator) CheckMessages(ctx sdk.Context, msgs []sdk.Msg, grantee *string) error {
@@ -151,124 +146,13 @@ func (ad IsBlacklistedDecorator) CheckMessages(ctx sdk.Context, msgs []sdk.Msg, 
 		}
 
 		switch m := msg.(type) {
-		case *banktypes.MsgSend:
-			for _, c := range m.Amount {
-				if grantee != nil {
-					err := checkForBlacklistedAddressByTokenFactory(ctx, *grantee, c, ad.fiattokenfactory)
-					if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-						return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not receive tokens", *grantee)
-					} else if err != nil {
-						return sdkerrors.Wrapf(err, "error decoding address (%s)", *grantee)
-					}
-				}
-
-				err := checkForBlacklistedAddressByTokenFactory(ctx, m.ToAddress, c, ad.fiattokenfactory)
-				if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-					return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not receive tokens", m.ToAddress)
-				} else if err != nil {
-					return sdkerrors.Wrapf(err, "error decoding address (%s)", m.ToAddress)
-				}
-				err = checkForBlacklistedAddressByTokenFactory(ctx, m.FromAddress, c, ad.fiattokenfactory)
-				if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-					return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not send tokens", m.FromAddress)
-				} else if err != nil {
-					return sdkerrors.Wrapf(err, "error decoding address (%s)", m.FromAddress)
-				}
-			}
-		case *banktypes.MsgMultiSend:
-			for _, i := range m.Inputs {
-				for _, c := range i.Coins {
-					if grantee != nil {
-						err := checkForBlacklistedAddressByTokenFactory(ctx, *grantee, c, ad.fiattokenfactory)
-						if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-							return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not receive tokens", *grantee)
-						} else if err != nil {
-							return sdkerrors.Wrapf(err, "error decoding address (%s)", *grantee)
-						}
-					}
-
-					err := checkForBlacklistedAddressByTokenFactory(ctx, i.Address, c, ad.fiattokenfactory)
-					if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-						return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not send or receive tokens", i.Address)
-					} else if err != nil {
-						return sdkerrors.Wrapf(err, "error decoding address (%s)", i.Address)
-					}
-				}
-			}
-			for _, o := range m.Outputs {
-				for _, c := range o.Coins {
-					if grantee != nil {
-						err := checkForBlacklistedAddressByTokenFactory(ctx, *grantee, c, ad.fiattokenfactory)
-						if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-							return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not receive tokens", *grantee)
-						} else if err != nil {
-							return sdkerrors.Wrapf(err, "error decoding address (%s)", *grantee)
-						}
-					}
-
-					err := checkForBlacklistedAddressByTokenFactory(ctx, o.Address, c, ad.fiattokenfactory)
-					if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-						return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not send or receive tokens", o.Address)
-					} else if err != nil {
-						return sdkerrors.Wrapf(err, "error decoding address (%s)", o.Address)
-					}
-				}
-			}
 		case *transfertypes.MsgTransfer:
-			if grantee != nil {
-				err := checkForBlacklistedAddressByTokenFactory(ctx, *grantee, m.Token, ad.fiattokenfactory)
-				if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-					return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not receive tokens", *grantee)
-				} else if err != nil {
-					return sdkerrors.Wrapf(err, "error decoding address (%s)", *grantee)
-				}
-			}
-
-			err := checkForBlacklistedAddressByTokenFactory(ctx, m.Sender, m.Token, ad.fiattokenfactory)
-			if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-				return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not send tokens", m.Sender)
-			} else if err != nil {
-				return sdkerrors.Wrapf(err, "error decoding address (%s)", m.Sender)
-			}
-			err = checkForBlacklistedAddressByTokenFactory(ctx, m.Receiver, m.Token, ad.fiattokenfactory)
+			// since the Transfer receiver is not on Noble, it is not checked by send restrictions and needs to be checked here
+			err := checkForBlacklistedAddressByTokenFactory(ctx, m.Receiver, m.Token, ad.fiattokenfactory)
 			if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
 				return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and can not receive tokens", m.Receiver)
 			} else if err != nil {
 				return sdkerrors.Wrapf(err, "error decoding address (%s)", m.Receiver)
-			}
-		case *cctptypes.MsgDepositForBurn:
-			c := sdk.Coin{Denom: m.BurnToken, Amount: sdk.NewIntFromBigInt(m.Amount.BigInt())}
-			if grantee != nil {
-				err := checkForBlacklistedAddressByTokenFactory(ctx, *grantee, c, ad.fiattokenfactory)
-				if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-					return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and cannot receive tokens", *grantee)
-				} else if err != nil {
-					return sdkerrors.Wrapf(err, "error decoding address (%s)", *grantee)
-				}
-			}
-
-			err := checkForBlacklistedAddressByTokenFactory(ctx, m.From, c, ad.fiattokenfactory)
-			if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-				return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and cannot burn tokens", m.From)
-			} else if err != nil {
-				return sdkerrors.Wrapf(err, "error decoding address (%s)", m.From)
-			}
-		case *cctptypes.MsgDepositForBurnWithCaller:
-			c := sdk.Coin{Denom: m.BurnToken, Amount: sdk.NewIntFromBigInt(m.Amount.BigInt())}
-			if grantee != nil {
-				err := checkForBlacklistedAddressByTokenFactory(ctx, *grantee, c, ad.fiattokenfactory)
-				if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-					return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and cannot receive tokens", *grantee)
-				} else if err != nil {
-					return sdkerrors.Wrapf(err, "error decoding address (%s)", *grantee)
-				}
-			}
-
-			err := checkForBlacklistedAddressByTokenFactory(ctx, m.From, c, ad.fiattokenfactory)
-			if errors.Is(err, fiattokenfactorytypes.ErrUnauthorized) {
-				return sdkerrors.Wrapf(err, "an address (%s) is blacklisted and cannot burn tokens", m.From)
-			} else if err != nil {
-				return sdkerrors.Wrapf(err, "error decoding address (%s)", m.From)
 			}
 		default:
 			continue
@@ -283,7 +167,7 @@ func (ad IsBlacklistedDecorator) CheckMessages(ctx sdk.Context, msgs []sdk.Msg, 
 func checkForBlacklistedAddressByTokenFactory(ctx sdk.Context, address string, c sdk.Coin, ctf *fiattokenfactorykeeper.Keeper) error {
 	ctfMintingDenom := ctf.GetMintingDenom(ctx)
 	if c.Denom == ctfMintingDenom.Denom {
-		_, addressBz, err := bech32.DecodeAndConvert(address)
+		_, addressBz, err := bech32.DecodeToBase256(address)
 		if err != nil {
 			return err
 		}

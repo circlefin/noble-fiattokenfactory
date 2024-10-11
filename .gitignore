@@ -1,2 +1,5 @@
 .idea
+.vscode
 build
+cover.html
+cover.out

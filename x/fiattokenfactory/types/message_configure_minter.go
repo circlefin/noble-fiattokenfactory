@@ -1,60 +1,43 @@
+// Copyright 2024 Circle Internet Group, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package types
 
 import (
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-const TypeMsgConfigureMinter = "configure_minter"
-
-var _ sdk.Msg = &MsgConfigureMinter{}
-
-func NewMsgConfigureMinter(from string, address string, allowance sdk.Coin) *MsgConfigureMinter {
-	return &MsgConfigureMinter{
-		From:      from,
-		Address:   address,
-		Allowance: allowance,
-	}
-}
-
-func (msg *MsgConfigureMinter) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgConfigureMinter) Type() string {
-	return TypeMsgConfigureMinter
-}
-
-func (msg *MsgConfigureMinter) GetSigners() []sdk.AccAddress {
-	from, err := sdk.AccAddressFromBech32(msg.From)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{from}
-}
-
-func (msg *MsgConfigureMinter) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
 
 func (msg *MsgConfigureMinter) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.From)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid from address (%s)", err)
+		return errors.Wrapf(ErrInvalidAddress, "invalid from address (%s)", err)
 	}
 
 	_, err = sdk.AccAddressFromBech32(msg.Address)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid minter address (%s)", err)
+		return errors.Wrapf(ErrInvalidAddress, "invalid minter address (%s)", err)
 	}
 
 	if msg.Allowance.IsNil() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "allowance amount cannot be nil")
+		return errors.Wrap(ErrInvalidCoins, "allowance amount cannot be nil")
 	}
 
 	if msg.Allowance.IsNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "allowance amount cannot be negative")
+		return errors.Wrap(ErrInvalidCoins, "allowance amount cannot be negative")
 	}
 
 	return nil

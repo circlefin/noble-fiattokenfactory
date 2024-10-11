@@ -1,64 +1,47 @@
+// Copyright 2024 Circle Internet Group, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package types
 
 import (
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-const TypeMsgMint = "mint"
-
-var _ sdk.Msg = &MsgMint{}
-
-func NewMsgMint(from string, address string, amount sdk.Coin) *MsgMint {
-	return &MsgMint{
-		From:    from,
-		Address: address,
-		Amount:  amount,
-	}
-}
-
-func (msg *MsgMint) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgMint) Type() string {
-	return TypeMsgMint
-}
-
-func (msg *MsgMint) GetSigners() []sdk.AccAddress {
-	from, err := sdk.AccAddressFromBech32(msg.From)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{from}
-}
-
-func (msg *MsgMint) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
 
 func (msg *MsgMint) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.From)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid from address (%s)", err)
+		return errors.Wrapf(ErrInvalidAddress, "invalid from address (%s)", err)
 	}
 
 	_, err = sdk.AccAddressFromBech32(msg.Address)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+		return errors.Wrapf(ErrInvalidAddress, "invalid address (%s)", err)
 	}
 
 	if msg.Amount.IsNil() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "mint amount cannot be nil")
+		return errors.Wrap(ErrInvalidCoins, "mint amount cannot be nil")
 	}
 
 	if msg.Amount.IsNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "mint amount cannot be negative")
+		return errors.Wrap(ErrInvalidCoins, "mint amount cannot be negative")
 	}
 
 	if msg.Amount.IsZero() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "mint amount cannot be zero")
+		return errors.Wrap(ErrInvalidCoins, "mint amount cannot be zero")
 	}
 
 	return nil
