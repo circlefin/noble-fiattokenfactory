@@ -1,10 +1,27 @@
+// Copyright 2024 Circle Internet Group, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package types
 
 import (
 	"fmt"
 
+	"cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // DefaultGenesis returns the default genesis state
@@ -19,7 +36,6 @@ func DefaultGenesis() *GenesisState {
 		Owner:                nil,
 		MinterControllerList: []MinterController{},
 		MintingDenom:         nil,
-		Params:               DefaultParams(),
 	}
 }
 
@@ -46,11 +62,11 @@ func (gs GenesisState) Validate() error {
 		mintersIndexMap[index] = struct{}{}
 
 		if _, err := sdk.AccAddressFromBech32(elem.Address); err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid minter address (%s)", err)
+			return errors.Wrapf(ErrInvalidAddress, "invalid minter address (%s)", err)
 		}
 
 		if elem.Allowance.IsNil() || elem.Allowance.IsNegative() {
-			return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "minter allowance cannot be nil or negative")
+			return errors.Wrap(ErrInvalidCoins, "minter allowance cannot be nil or negative")
 		}
 	}
 
@@ -64,11 +80,11 @@ func (gs GenesisState) Validate() error {
 		minterControllerIndexMap[index] = struct{}{}
 
 		if _, err := sdk.AccAddressFromBech32(elem.Minter); err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "minter controller has invalid minter address (%s)", err)
+			return errors.Wrapf(ErrInvalidAddress, "minter controller has invalid minter address (%s)", err)
 		}
 
 		if _, err := sdk.AccAddressFromBech32(elem.Controller); err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "minter controller has invalid controller address (%s)", err)
+			return errors.Wrapf(ErrInvalidAddress, "minter controller has invalid controller address (%s)", err)
 		}
 	}
 
@@ -77,7 +93,7 @@ func (gs GenesisState) Validate() error {
 	if gs.Owner != nil {
 		owner, err := sdk.AccAddressFromBech32(gs.Owner.Address)
 		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid owner address (%s)", err)
+			return errors.Wrapf(ErrInvalidAddress, "invalid owner address (%s)", err)
 		}
 		addresses = append(addresses, owner)
 	}
@@ -85,7 +101,7 @@ func (gs GenesisState) Validate() error {
 	if gs.MasterMinter != nil {
 		masterMinter, err := sdk.AccAddressFromBech32(gs.MasterMinter.Address)
 		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid master minter address (%s)", err)
+			return errors.Wrapf(ErrInvalidAddress, "invalid master minter address (%s)", err)
 		}
 		addresses = append(addresses, masterMinter)
 	}
@@ -93,7 +109,7 @@ func (gs GenesisState) Validate() error {
 	if gs.Pauser != nil {
 		pauser, err := sdk.AccAddressFromBech32(gs.Pauser.Address)
 		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid pauser address (%s)", err)
+			return errors.Wrapf(ErrInvalidAddress, "invalid pauser address (%s)", err)
 		}
 		addresses = append(addresses, pauser)
 	}
@@ -101,7 +117,7 @@ func (gs GenesisState) Validate() error {
 	if gs.Blacklister != nil {
 		blacklister, err := sdk.AccAddressFromBech32(gs.Blacklister.Address)
 		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid black lister address (%s)", err)
+			return errors.Wrapf(ErrInvalidAddress, "invalid black lister address (%s)", err)
 		}
 		addresses = append(addresses, blacklister)
 	}
@@ -114,7 +130,7 @@ func (gs GenesisState) Validate() error {
 		return fmt.Errorf("minting denom cannot be an empty string")
 	}
 
-	return gs.Params.Validate()
+	return nil
 }
 
 // validatePrivileges ensures that the same address is not being assigned to more than one privileged role.
@@ -126,7 +142,7 @@ func validatePrivileges(addresses []sdk.AccAddress) error {
 			}
 
 			if current.String() == target.String() {
-				return sdkerrors.Wrapf(ErrAlreadyPrivileged, "%s", current)
+				return errors.Wrapf(ErrAlreadyPrivileged, "%s", current)
 			}
 		}
 	}

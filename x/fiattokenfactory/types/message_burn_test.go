@@ -1,11 +1,27 @@
+// Copyright 2024 Circle Internet Group, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package types
 
 import (
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/circlefin/noble-fiattokenfactory/testutil/sample"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,16 +32,56 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 		err  error
 	}{
 		{
-			name: "invalid address",
+			name: "invalid from address",
 			msg: MsgBurn{
 				From: "invalid_address",
 			},
-			err: sdkerrors.ErrInvalidAddress,
-		}, {
-			name: "valid address",
+			err: ErrInvalidAddress,
+		},
+		{
+			name: "amount is empty",
 			msg: MsgBurn{
 				From:   sample.AccAddress(),
-				Amount: sdk.NewCoin("test", sdk.NewInt(1)),
+				Amount: sdk.Coin{},
+			},
+			err: ErrInvalidCoins,
+		},
+		{
+			name: "amount is missing",
+			msg: MsgBurn{
+				From: sample.AccAddress(),
+			},
+			err: ErrInvalidCoins,
+		},
+		{
+			name: "amount has missing amount",
+			msg: MsgBurn{
+				From:   sample.AccAddress(),
+				Amount: sdk.Coin{Denom: "uusdc"},
+			},
+			err: ErrInvalidCoins,
+		},
+		{
+			name: "amount is zero",
+			msg: MsgBurn{
+				From:   sample.AccAddress(),
+				Amount: sdk.Coin{Denom: "uusdc", Amount: math.NewInt(0)},
+			},
+			err: ErrInvalidCoins,
+		},
+		{
+			name: "amount is negative",
+			msg: MsgBurn{
+				From:   sample.AccAddress(),
+				Amount: sdk.Coin{Denom: "uusdc", Amount: math.NewInt(-1)},
+			},
+			err: ErrInvalidCoins,
+		},
+		{
+			name: "happy path",
+			msg: MsgBurn{
+				From:   sample.AccAddress(),
+				Amount: sdk.NewCoin("test", math.NewInt(1)),
 			},
 		},
 	}
