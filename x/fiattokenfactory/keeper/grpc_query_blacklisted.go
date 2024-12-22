@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -59,7 +58,7 @@ func (k Keeper) Blacklisted(ctx context.Context, req *types.QueryGetBlacklistedR
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	_, addressBz, err := bech32.DecodeToBase256(req.Address)
+	_, addressBz, err := types.DecodeAddress(req.Address)
 	if err != nil {
 		return nil, err
 	}

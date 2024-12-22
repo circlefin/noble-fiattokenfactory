@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 
 	"cosmossdk.io/core/store"
@@ -82,7 +81,7 @@ func (k Keeper) SendRestrictionFn(ctx context.Context, fromAddr, toAddr sdk.AccA
 		grantees := ctx.Value(types.GranteeKey)
 		if grantees != nil {
 			for _, grantee := range grantees.([]string) {
-				_, addressBz, err := bech32.DecodeToBase256(grantee)
+				_, addressBz, err := types.DecodeAddress(grantee)
 				if err != nil {
 					return toAddr, err
 				}
