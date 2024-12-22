@@ -33,8 +33,8 @@ func TestBlockIBC(t *testing.T) {
 	// ARRANGE: Mock sender and receiver.
 	sender, receiver := sample.TestAccount(), sample.TestAccount()
 	senderBech32m, receiverBech32m := sample.TestAccountBech32m(), sample.TestAccountBech32m()
-	receiverAddress, _ := codec.NewBech32Codec("osmo").BytesToString(receiver.AddressBz)
-	receiverBech32mAddress, _ := codec.NewBech32Codec("osmo").BytesToString(receiverBech32m.AddressBz)
+	receiverAddress, _ := codec.NewBech32Codec("osmo").BytesToString(fiattokenfactorytypes.MustConvertToBase256(receiver.AddressBz))
+	receiverBech32mAddress, _ := codec.NewBech32Codec("osmo").BytesToString(fiattokenfactorytypes.MustConvertToBase256(receiverBech32m.AddressBz))
 
 	// ARRANGE: Organize table driven test cases.
 	testCases := map[string]struct {
