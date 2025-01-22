@@ -19,7 +19,6 @@ package keeper
 import (
 	"context"
 
-	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -38,7 +37,7 @@ func (k Keeper) Mint(ctx sdk.Context, msg *types.MsgMint) (*types.MsgMintRespons
 		return nil, sdkerrors.Wrapf(types.ErrUnauthorized, "you are not a minter")
 	}
 
-	_, addressBz, err := bech32.DecodeToBase256(msg.From)
+	_, addressBz, err := DecodeNoLimitToBase256(msg.From)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +47,7 @@ func (k Keeper) Mint(ctx sdk.Context, msg *types.MsgMint) (*types.MsgMintRespons
 		return nil, sdkerrors.Wrapf(types.ErrMint, "minter address is blacklisted")
 	}
 
-	_, addressBz, err = bech32.DecodeToBase256(msg.Address)
+	_, addressBz, err = DecodeNoLimitToBase256(msg.Address)
 	if err != nil {
 		return nil, err
 	}

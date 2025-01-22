@@ -19,7 +19,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,15 +30,14 @@ import (
 
 func TestBlacklisterQuery_NoBlacklisterConfigured(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
 
-	_, err := keeper.Blacklister(wctx, &types.QueryGetBlacklisterRequest{})
+	_, err := keeper.Blacklister(ctx, &types.QueryGetBlacklisterRequest{})
 	require.ErrorIs(t, err, status.Error(codes.NotFound, "not found"))
 }
 
 func TestBlacklisterQuery(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
+
 	expectedBlacklister := createTestBlacklister(keeper, ctx)
 
 	for _, tc := range []struct {
@@ -59,7 +57,7 @@ func TestBlacklisterQuery(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.Blacklister(wctx, tc.request)
+			response, err := keeper.Blacklister(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {

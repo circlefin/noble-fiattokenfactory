@@ -19,7 +19,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,10 +30,9 @@ import (
 
 func TestPausedQuery_Unpaused(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
 
 	expectedPauseValue := createTestPaused(keeper, ctx, false)
-	response, err := keeper.Paused(wctx, &types.QueryGetPausedRequest{})
+	response, err := keeper.Paused(ctx, &types.QueryGetPausedRequest{})
 	require.NoError(t, err)
 	require.Equal(t,
 		nullify.Fill(&types.QueryGetPausedResponse{Paused: expectedPauseValue}),
@@ -44,7 +42,7 @@ func TestPausedQuery_Unpaused(t *testing.T) {
 
 func TestPausedQuery(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
+
 	expectedPauseValue := createTestPaused(keeper, ctx, true)
 
 	for _, tc := range []struct {
@@ -64,7 +62,7 @@ func TestPausedQuery(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.Paused(wctx, tc.request)
+			response, err := keeper.Paused(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
