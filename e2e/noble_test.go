@@ -37,7 +37,7 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-// run `make local-image`to rebuild updated binary before running test
+// run `make heighliner`to rebuild updated binary before running test
 func TestNobleChain(t *testing.T) {
 	if testing.Short() {
 		t.Skip()

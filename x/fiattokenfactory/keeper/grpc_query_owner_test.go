@@ -19,7 +19,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,15 +30,14 @@ import (
 
 func TestOwnerQuery_NoOwnerConfigured(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
 
-	_, err := keeper.Owner(wctx, &types.QueryGetOwnerRequest{})
+	_, err := keeper.Owner(ctx, &types.QueryGetOwnerRequest{})
 	require.ErrorIs(t, err, status.Error(codes.NotFound, "not found"))
 }
 
 func TestOwnerQuery(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
+
 	owner := types.Owner{Address: "test"}
 	keeper.SetOwner(ctx, owner)
 
@@ -60,7 +58,7 @@ func TestOwnerQuery(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.Owner(wctx, tc.request)
+			response, err := keeper.Owner(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {

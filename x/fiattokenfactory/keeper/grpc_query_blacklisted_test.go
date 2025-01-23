@@ -22,7 +22,6 @@ import (
 
 	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/circlefin/noble-fiattokenfactory/testutil/sample"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -38,7 +37,6 @@ var _ = strconv.IntSize
 
 func TestBlacklistedQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNBlacklisted(keeper, ctx, 2)
 	msgs = append(msgs, createNBlacklistedBech32m(keeper, ctx, 1)...)
 	for _, tc := range []struct {
@@ -95,7 +93,7 @@ func TestBlacklistedQuerySingle(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.Blacklisted(wctx, tc.request)
+			response, err := keeper.Blacklisted(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
@@ -111,16 +109,14 @@ func TestBlacklistedQuerySingle(t *testing.T) {
 
 func TestBlacklistedQueryPaginated_NoBlacklistedAddresses(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
 
-	resp, err := keeper.BlacklistedAll(wctx, createQueryAllBlacklistedRequest(nil, 0, 0, true))
+	resp, err := keeper.BlacklistedAll(ctx, createQueryAllBlacklistedRequest(nil, 0, 0, true))
 	require.NoError(t, err)
 	require.Equal(t, 0, int(resp.Pagination.Total))
 }
 
 func TestBlacklistedQueryPaginated(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNBlacklisted(keeper, ctx, 5)
 	msgs = append(msgs, createNBlacklistedBech32m(keeper, ctx, 5)...)
 
@@ -132,7 +128,7 @@ func TestBlacklistedQueryPaginated(t *testing.T) {
 	t.Run("LookupByOffset", func(t *testing.T) {
 		step := 2
 		for i := 0; i < len(blacklisted); i += step {
-			resp, err := keeper.BlacklistedAll(wctx, createQueryAllBlacklistedRequest(nil, uint64(i), uint64(step), false))
+			resp, err := keeper.BlacklistedAll(ctx, createQueryAllBlacklistedRequest(nil, uint64(i), uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.Blacklisted), step)
 			require.Subset(t,
@@ -145,7 +141,7 @@ func TestBlacklistedQueryPaginated(t *testing.T) {
 		step := 2
 		var next []byte
 		for i := 0; i < len(blacklisted); i += step {
-			resp, err := keeper.BlacklistedAll(wctx, createQueryAllBlacklistedRequest(next, 0, uint64(step), false))
+			resp, err := keeper.BlacklistedAll(ctx, createQueryAllBlacklistedRequest(next, 0, uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.Blacklisted), step)
 			require.Subset(t,
@@ -156,7 +152,7 @@ func TestBlacklistedQueryPaginated(t *testing.T) {
 		}
 	})
 	t.Run("LookupAll", func(t *testing.T) {
-		resp, err := keeper.BlacklistedAll(wctx, createQueryAllBlacklistedRequest(nil, 0, 0, true))
+		resp, err := keeper.BlacklistedAll(ctx, createQueryAllBlacklistedRequest(nil, 0, 0, true))
 		require.NoError(t, err)
 		require.Equal(t, len(blacklisted), int(resp.Pagination.Total))
 		require.ElementsMatch(t,
@@ -165,11 +161,11 @@ func TestBlacklistedQueryPaginated(t *testing.T) {
 		)
 	})
 	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.BlacklistedAll(wctx, nil)
+		_, err := keeper.BlacklistedAll(ctx, nil)
 		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
 	t.Run("PaginateError", func(t *testing.T) {
-		_, err := keeper.BlacklistedAll(wctx, createQueryAllBlacklistedRequest([]byte("next bytes"), 1, 0, true))
+		_, err := keeper.BlacklistedAll(ctx, createQueryAllBlacklistedRequest([]byte("next bytes"), 1, 0, true))
 		require.ErrorContains(t, err, "invalid request, either offset or key is expected, got both")
 	})
 }

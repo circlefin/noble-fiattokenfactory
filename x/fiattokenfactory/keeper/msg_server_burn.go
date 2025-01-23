@@ -22,7 +22,6 @@ import (
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/btcsuite/btcd/btcutil/bech32"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -37,7 +36,7 @@ func (k Keeper) Burn(ctx sdk.Context, msg *types.MsgBurn) (*types.MsgBurnRespons
 		return nil, sdkerrors.Wrapf(types.ErrBurn, "%v: you are not a minter", types.ErrUnauthorized)
 	}
 
-	_, addressBz, err := bech32.DecodeToBase256(msg.From)
+	_, addressBz, err := DecodeNoLimitToBase256(msg.From)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrBurn, err.Error())
 	}

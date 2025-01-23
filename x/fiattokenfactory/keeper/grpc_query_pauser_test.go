@@ -19,7 +19,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,15 +30,14 @@ import (
 
 func TestPauserQuery_NoPauserConfigured(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
 
-	_, err := keeper.Pauser(wctx, &types.QueryGetPauserRequest{})
+	_, err := keeper.Pauser(ctx, &types.QueryGetPauserRequest{})
 	require.ErrorIs(t, err, status.Error(codes.NotFound, "not found"))
 }
 
 func TestPauserQuery(t *testing.T) {
 	keeper, ctx := keepertest.FiatTokenfactoryKeeper()
-	wctx := sdk.WrapSDKContext(ctx)
+
 	expectedPauser := createTestPauser(keeper, ctx)
 
 	for _, tc := range []struct {
@@ -59,7 +57,7 @@ func TestPauserQuery(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.Pauser(wctx, tc.request)
+			response, err := keeper.Pauser(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {

@@ -27,8 +27,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testAddress = sample.AccAddress()
-
 func createValidGenesis() *types.GenesisState {
 	return &types.GenesisState{
 		BlacklistedList: []types.Blacklisted{

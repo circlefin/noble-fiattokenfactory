@@ -24,4 +24,7 @@ BUILD_FLAGS := -ldflags '$(ldflags)'
 build:
 	@go build -mod=readonly $(BUILD_FLAGS) -o $(PWD)/build/ ./...
 
-.PHONY: build
+install:
+	@go install -mod=readonly $(BUILD_FLAGS) ./...
+
+.PHONY: build install
