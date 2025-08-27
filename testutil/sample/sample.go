@@ -33,7 +33,8 @@ func AccAddress() string {
 func AddressBz() []byte {
 	pk := ed25519.GenPrivKey().PubKey()
 	address := sdk.AccAddress(pk.Address()).String()
-	_, bz, _ := bech32.DecodeToBase256(address)
+	_, bz256, _ := bech32.DecodeNoLimit(address)
+	bz, _ := bech32.ConvertBits(bz256, 5, 8, false)
 	return bz
 }
 
@@ -47,7 +48,8 @@ type Account struct {
 func TestAccount() Account {
 	pk := ed25519.GenPrivKey().PubKey()
 	address := sdk.AccAddress(pk.Address()).String()
-	_, bz, _ := bech32.DecodeToBase256(address)
+	_, bz256, _ := bech32.DecodeNoLimit(address)
+	bz, _ := bech32.ConvertBits(bz256, 5, 8, false)
 	return Account{
 		Address:   address,
 		AddressBz: bz,
@@ -58,7 +60,7 @@ func TestAccount() Account {
 func TestAccountBech32m() Account {
 	pk := ed25519.GenPrivKey().PubKey()
 	address := sdk.AccAddress(pk.Address()).String()
-	hrp, bz256, _ := bech32.DecodeToBase256(address)
+	hrp, bz256, _ := bech32.DecodeNoLimit(address)
 	bz32, _ := bech32.ConvertBits(bz256, 8, 5, true) // EncodeM only accepts base32 encoded data
 	address, _ = bech32.EncodeM(hrp, bz32)
 	return Account{

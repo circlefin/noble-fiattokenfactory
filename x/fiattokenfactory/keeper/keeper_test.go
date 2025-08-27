@@ -22,6 +22,7 @@ import (
 	"github.com/circlefin/noble-fiattokenfactory/testutil/keeper"
 	"github.com/circlefin/noble-fiattokenfactory/testutil/sample"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

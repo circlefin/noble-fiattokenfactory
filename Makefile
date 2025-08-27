@@ -1,4 +1,5 @@
-.PHONY: proto-format proto-lint proto-gen format lint test-e2e test-unit build
+.PHONY: proto-all proto-format proto-lint proto-gen format heighliner test-e2e test-unit test build install
+
 all: proto-all format lint test-unit build
 
 ###############################################################################
@@ -9,6 +10,11 @@ build:
 	@echo "🤖 Building simd..."
 	@cd simapp && make build
 	@echo "✅ Completed build!"
+
+install:
+	@echo "🤖 Installing simd..."
+	@cd simapp && make install
+	@echo "✅ Completed install!"
 
 ###############################################################################
 ###                          Formatting & Linting                           ###
@@ -54,7 +60,7 @@ proto-lint:
 
 heighliner:
 	@echo "🤖 Building image..."
-	@heighliner build --chain noble-fiattokenfactory-simd --local --file ./chains.yaml 1> /dev/null
+	@heighliner build --chain noble-fiattokenfactory-simd --local --file ./chains.yaml
 	@echo "✅ Completed build!"
 
 test: test-e2e test-unit

@@ -20,7 +20,6 @@ import (
 	"errors"
 
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/btcsuite/btcd/btcutil/bech32"
 	fiattokenfactorykeeper "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/keeper"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	fiattokenfactorytypes "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
@@ -167,7 +166,7 @@ func (ad IsBlacklistedDecorator) CheckMessages(ctx sdk.Context, msgs []sdk.Msg, 
 func checkForBlacklistedAddressByTokenFactory(ctx sdk.Context, address string, c sdk.Coin, ctf *fiattokenfactorykeeper.Keeper) error {
 	ctfMintingDenom := ctf.GetMintingDenom(ctx)
 	if c.Denom == ctfMintingDenom.Denom {
-		_, addressBz, err := bech32.DecodeToBase256(address)
+		_, addressBz, err := fiattokenfactorykeeper.DecodeNoLimitToBase256(address)
 		if err != nil {
 			return err
 		}

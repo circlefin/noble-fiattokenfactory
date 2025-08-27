@@ -18,7 +18,6 @@ package blockibc
 
 import (
 	"cosmossdk.io/errors"
-	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/keeper"
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -121,7 +120,7 @@ func (im IBCMiddleware) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(types.ErrPaused)
 	}
 
-	_, addressBz, err := bech32.DecodeToBase256(data.Receiver)
+	_, addressBz, err := keeper.DecodeNoLimitToBase256(data.Receiver)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
@@ -132,7 +131,7 @@ func (im IBCMiddleware) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(ackErr)
 	}
 
-	_, addressBz, err = bech32.DecodeToBase256(data.Sender)
+	_, addressBz, err = keeper.DecodeNoLimitToBase256(data.Sender)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
