@@ -458,8 +458,7 @@ func testAuthZIBCTransfer(t *testing.T, ctx context.Context, nobleValidator *cos
 }
 
 func testAuthZIBCTransferFail(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet, errMsg string, skipGrant bool) {
-	denomTrace := transfertypes.ParseDenomTrace("transfer/channel-0/" + mintingDenom)
-	ibcDenom := denomTrace.IBCDenom()
+	ibcDenom := transfertypes.ExtractDenomFromPath("transfer/channel-0/" + mintingDenom).IBCDenom()
 
 	fromWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
 	toWalletInitialBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
@@ -561,6 +560,5 @@ func getBalance(t *testing.T, ctx context.Context, denom string, chain *cosmos.C
 }
 
 func getIBCDenom(mintingDenom string) string {
-	denomTrace := transfertypes.ParseDenomTrace("transfer/channel-0/" + mintingDenom)
-	return denomTrace.IBCDenom()
+	return transfertypes.ExtractDenomFromPath("transfer/channel-0/" + mintingDenom).IBCDenom()
 }

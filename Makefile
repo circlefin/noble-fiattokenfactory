@@ -54,7 +54,7 @@ proto-lint:
 
 heighliner:
 	@echo "🤖 Building image..."
-	@heighliner build --chain noble-fiattokenfactory-simd --local 1> /dev/null
+	@heighliner build --chain noble-fiattokenfactory-simd --local --file ./chains.yaml 1> /dev/null
 	@echo "✅ Completed build!"
 
 test: test-e2e test-unit

@@ -31,8 +31,8 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	solomachine "github.com/cosmos/ibc-go/v10/modules/light-clients/06-solomachine"
-	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	soloclient "github.com/cosmos/ibc-go/v10/modules/light-clients/06-solomachine"
+	tmclient "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 )
 
 func (app *SimApp) RegisterIBCModules() error {
@@ -70,17 +70,17 @@ func (app *SimApp) RegisterIBCModules() error {
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()
-	tmLightClientModule := tendermint.NewLightClientModule(app.appCodec, storeProvider)
-	app.IBCKeeper.ClientKeeper.AddRoute(tendermint.ModuleName, &tmLightClientModule)
+	tmLightClientModule := tmclient.NewLightClientModule(app.appCodec, storeProvider)
+	app.IBCKeeper.ClientKeeper.AddRoute(tmclient.ModuleName, &tmLightClientModule)
 
-	smLightClientModule := solomachine.NewLightClientModule(app.appCodec, storeProvider)
-	app.IBCKeeper.ClientKeeper.AddRoute(solomachine.ModuleName, &smLightClientModule)
+	smLightClientModule := soloclient.NewLightClientModule(app.appCodec, storeProvider)
+	app.IBCKeeper.ClientKeeper.AddRoute(soloclient.ModuleName, &smLightClientModule)
 
 	if err := app.RegisterModules(
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
-		tendermint.NewAppModule(tmLightClientModule),
-		solomachine.NewAppModule(smLightClientModule),
+		tmclient.NewAppModule(tmLightClientModule),
+		soloclient.NewAppModule(smLightClientModule),
 	); err != nil {
 		return err
 	}

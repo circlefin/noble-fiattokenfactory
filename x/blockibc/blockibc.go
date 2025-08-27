@@ -110,7 +110,7 @@ func (im IBCMiddleware) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(ackErr)
 	}
 
-	denomTrace := transfertypes.ParseDenomTrace(data.Denom)
+	denomTrace := transfertypes.ExtractDenomFromPath(data.Denom)
 
 	mintingDenom := im.keeper.GetMintingDenom(ctx)
 	if denomTrace.Base != mintingDenom.Denom {
