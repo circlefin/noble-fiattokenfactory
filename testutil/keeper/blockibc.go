@@ -26,40 +26,26 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	portkeeper "github.com/cosmos/ibc-go/v8/modules/core/05-port/keeper"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	"github.com/cosmos/ibc-go/v8/testing/mock"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
+	"github.com/cosmos/ibc-go/v10/testing/mock"
 )
 
 func BlockIBC() (blockibc.IBCMiddleware, *fiattokenfactorykeeper.Keeper, sdk.Context) {
-	keys := storetypes.NewKVStoreKeys(capabilitytypes.StoreKey, fiattokenfactorytypes.StoreKey)
-	mkeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
-	ctx := testutil.DefaultContextWithKeys(keys, nil, mkeys)
+	keys := storetypes.NewKVStoreKeys(fiattokenfactorytypes.StoreKey)
+	ctx := testutil.DefaultContextWithKeys(keys, nil, nil)
 
 	cdc := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 
-	capabilityKeeper := capabilitykeeper.NewKeeper(
-		cdc, keys[capabilitytypes.StoreKey], mkeys[capabilitytypes.MemStoreKey],
-	)
-	portKeeper := portkeeper.NewKeeper(
-		capabilityKeeper.ScopeToModule(exported.ModuleName),
-	)
-
-	transferAppModule := mock.NewAppModule(&portKeeper)
+	transferAppModule := mock.NewAppModule()
 	transferIBCModule := mock.NewIBCModule(
 		&transferAppModule,
-		mock.NewIBCApp(
-			transfertypes.ModuleName,
-			capabilityKeeper.ScopeToModule(transfertypes.ModuleName),
-		),
+		mock.NewIBCApp(transfertypes.ModuleName),
 	)
 
 	// override the mock ibc_module OnRecvPacket method since it expects specific packet data to return a successful acknowledgment.
-	transferIBCModule.IBCApp.OnRecvPacket = func(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) exported.Acknowledgement {
+	transferIBCModule.IBCApp.OnRecvPacket = func(ctx sdk.Context, channelVersion string, packet channeltypes.Packet, relayer sdk.AccAddress) exported.Acknowledgement {
 		return mock.MockAcknowledgement
 	}
 

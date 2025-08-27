@@ -48,9 +48,8 @@ import (
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	transferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	transferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	_ "cosmossdk.io/api/cosmos/tx/config/v1"                           // import for side-effects
 	_ "cosmossdk.io/x/upgrade"                                         // import for side-effects
@@ -95,11 +94,8 @@ type SimApp struct {
 	StakingKeeper         *stakingkeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
 	// IBC Modules
-	CapabilityKeeper     *capabilitykeeper.Keeper
-	IBCKeeper            *ibckeeper.Keeper
-	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	TransferKeeper       transferkeeper.Keeper
-	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+	IBCKeeper      *ibckeeper.Keeper
+	TransferKeeper transferkeeper.Keeper
 	// Custom Modules
 	FiatTokenFactoryKeeper *fiattokenfactorykeeper.Keeper
 }

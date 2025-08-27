@@ -22,12 +22,12 @@ The codebase is organized into several key directories and files:
 Follow the steps below to set up your repo locally:
 
 - **Install Golang**:
-  - Download and install Golang 1.22 from the official [Golang website](https://go.dev/doc/manage-install).
+  - Download and install Golang 1.23 from the official [Golang website](https://go.dev/doc/manage-install).
   - Verify the installation by running `go version`.
 - **Install [Heighliner](https://github.com/strangelove-ventures/heighliner)**: Heighliner is a tool that streamlines building cosmos chain containers. Install heighliner by running
 
     ```sh
-    go install github.com/strangelove-ventures/heighliner@v1.6.3
+    go install github.com/strangelove-ventures/heighliner@v1.7.4
     ```
 
     Or build heighliner from source by first cloning the [repo](https://github.com/strangelove-ventures/heighliner) and running `go build && go install` inside the cloned repo.

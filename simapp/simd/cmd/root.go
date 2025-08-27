@@ -38,14 +38,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v8/modules/core"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	soloclient "github.com/cosmos/ibc-go/v8/modules/light-clients/06-solomachine"
-	tmclient "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	soloclient "github.com/cosmos/ibc-go/v10/modules/light-clients/06-solomachine"
+	tmclient "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/spf13/cobra"
 
 	"github.com/circlefin/noble-fiattokenfactory/simapp"
@@ -125,11 +123,10 @@ func NewRootCmd() *cobra.Command {
 	// manually register the modules on the client side.
 	// This needs to be removed after IBC supports App Wiring.
 	modules := map[string]appmodule.AppModule{
-		capabilitytypes.ModuleName: capability.AppModule{},
-		ibcexported.ModuleName:     ibc.AppModule{},
-		transfertypes.ModuleName:   transfer.AppModule{},
-		tmclient.ModuleName:        tmclient.AppModule{},
-		soloclient.ModuleName:      soloclient.AppModule{},
+		ibcexported.ModuleName:   ibc.AppModule{},
+		transfertypes.ModuleName: transfer.AppModule{},
+		tmclient.ModuleName:      tmclient.AppModule{},
+		soloclient.ModuleName:    soloclient.AppModule{},
 	}
 	for name, mod := range modules {
 		moduleBasicManager[name] = module.CoreAppModuleBasicAdaptor(name, mod)

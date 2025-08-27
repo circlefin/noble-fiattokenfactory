@@ -26,13 +26,13 @@ import (
 
 	"github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	"github.com/strangelove-ventures/interchaintest/v8"
-	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
-	"github.com/strangelove-ventures/interchaintest/v8/ibc"
-	"github.com/strangelove-ventures/interchaintest/v8/relayer/hermes"
-	"github.com/strangelove-ventures/interchaintest/v8/testreporter"
-	"github.com/strangelove-ventures/interchaintest/v8/testutil"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	"github.com/cosmos/interchaintest/v10"
+	"github.com/cosmos/interchaintest/v10/chain/cosmos"
+	"github.com/cosmos/interchaintest/v10/ibc"
+	"github.com/cosmos/interchaintest/v10/relayer/hermes"
+	"github.com/cosmos/interchaintest/v10/testreporter"
+	"github.com/cosmos/interchaintest/v10/testutil"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )
@@ -458,10 +458,7 @@ func testAuthZIBCTransfer(t *testing.T, ctx context.Context, nobleValidator *cos
 }
 
 func testAuthZIBCTransferFail(t *testing.T, ctx context.Context, nobleValidator *cosmos.ChainNode, mintingDenom string, noble *cosmos.CosmosChain, gaia *cosmos.CosmosChain, fromWallet ibc.Wallet, toWallet ibc.Wallet, granteeWallet ibc.Wallet, errMsg string, skipGrant bool) {
-	ibcDenom := transfertypes.DenomTrace{
-		Path:      "transfer/channel-0",
-		BaseDenom: mintingDenom,
-	}.IBCDenom()
+	ibcDenom := transfertypes.ExtractDenomFromPath("transfer/channel-0/" + mintingDenom).IBCDenom()
 
 	fromWalletInitialBalance := getBalance(t, ctx, mintingDenom, noble, fromWallet)
 	toWalletInitialBalance := getBalance(t, ctx, ibcDenom, gaia, toWallet)
@@ -563,8 +560,5 @@ func getBalance(t *testing.T, ctx context.Context, denom string, chain *cosmos.C
 }
 
 func getIBCDenom(mintingDenom string) string {
-	return transfertypes.DenomTrace{
-		Path:      "transfer/channel-0",
-		BaseDenom: mintingDenom,
-	}.IBCDenom()
+	return transfertypes.ExtractDenomFromPath("transfer/channel-0/" + mintingDenom).IBCDenom()
 }
