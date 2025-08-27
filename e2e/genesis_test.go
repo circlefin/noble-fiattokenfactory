@@ -24,19 +24,19 @@ import (
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/interchaintest/v10"
+	"github.com/cosmos/interchaintest/v10/chain/cosmos"
+	"github.com/cosmos/interchaintest/v10/ibc"
+	"github.com/cosmos/interchaintest/v10/relayer"
+	"github.com/cosmos/interchaintest/v10/relayer/rly"
 	"github.com/icza/dyno"
-	"github.com/strangelove-ventures/interchaintest/v8"
-	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
-	"github.com/strangelove-ventures/interchaintest/v8/ibc"
-	"github.com/strangelove-ventures/interchaintest/v8/relayer"
-	"github.com/strangelove-ventures/interchaintest/v8/relayer/rly"
 )
 
 var nobleImageInfo = []ibc.DockerImage{
 	{
 		Repository: "noble-fiattokenfactory-simd",
 		Version:    "local",
-		UidGid:     "1025:1025",
+		UIDGID:     "1025:1025",
 	},
 }
 
@@ -128,7 +128,7 @@ var (
 	defaultTransferMaxFee          = "5000000"
 	defaultTransferFeeDenom        = denomMetadataDrachma.Base
 
-	relayerImage = relayer.CustomDockerImage("ghcr.io/cosmos/relayer", "v2.4.2", rly.RlyDefaultUidGid)
+	relayerImage = relayer.CustomDockerImage("ghcr.io/cosmos/relayer", "v2.4.2", rly.RlyDefaultUIDGID)
 )
 
 type DenomMetadata struct {
@@ -438,8 +438,8 @@ func nobleChainSpec(
 	}
 }
 
-func preGenesisAll(ctx context.Context, gw *genesisWrapper, minSetupFiatTf bool) func(ibc.ChainConfig) error {
-	return func(cc ibc.ChainConfig) (err error) {
+func preGenesisAll(ctx context.Context, gw *genesisWrapper, minSetupFiatTf bool) func(ibc.Chain) error {
+	return func(c ibc.Chain) (err error) {
 		val := gw.chain.Validators[0]
 
 		gw.fiatTfRoles, err = createTokenfactoryRoles(ctx, denomMetadataDrachma, val, minSetupFiatTf)

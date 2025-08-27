@@ -23,9 +23,9 @@ import (
 	"github.com/circlefin/noble-fiattokenfactory/testutil/sample"
 	fiattokenfactorytypes "github.com/circlefin/noble-fiattokenfactory/x/fiattokenfactory/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/codec"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -121,7 +121,7 @@ func TestBlockIBC(t *testing.T) {
 			}
 
 			// ACT: Receive transfer packet in middleware.
-			ack := middleware.OnRecvPacket(ctx, tc.packet, nil)
+			ack := middleware.OnRecvPacket(ctx, transfertypes.PortID, tc.packet, nil)
 
 			// ASSERT: Assert the acknowledgment's success based on the test case.
 			var assertBool require.BoolAssertionFunc

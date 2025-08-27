@@ -23,8 +23,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	ibcante "github.com/cosmos/ibc-go/v8/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 )
 
 var ErrLogic = errors.Register("simapp", 1, "internal logic error")
